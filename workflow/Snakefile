@@ -1,0 +1,18 @@
+configfile: "config/config.yaml"
+wf = config["workflow"]
+print(wf)
+
+module analysis:
+    snakefile:
+        'rules/%s.smk' % (wf)
+    config:
+        config
+    prefix:
+        wf
+
+
+use rule * from analysis as analysis_* 
+
+rule all:
+    input:
+        rules.analysis_all.input

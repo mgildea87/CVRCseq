@@ -1,0 +1,3 @@
+jobs: 20
+cluster: "sbatch -p cpu_short -t {resources.time_min} --mem={resources.mem_mb} -c {resources.cpus} -e slurm_logs/{rule}_{wildcards}%j.log -o slurm_logs/{rule}_{wildcards}%j.log -J {rule}"
+default-resources: [cpus=8, mem_mb=10000, time_min=120]

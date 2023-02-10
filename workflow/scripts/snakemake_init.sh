@@ -60,5 +60,5 @@ fi
 
 #launch snakemake
 snakemake --profile config/profile --config workflow=$workflow
-#snakemake --report workflow/snake_make_report.html
-#multiqc .
+snakemake --report workflow/snake_make_report.html
+multiqc .

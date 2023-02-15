@@ -51,6 +51,7 @@ fi
 module load miniconda3/cpu/4.9.2
 conda activate $conda_env
 mkdir -p "$workflow"/inputs/fastq
+mkdir slurm_logs
 
 #exit if this script errors
 if ! python workflow/scripts/cat_rename.py $fastq_directory $workflow ${1}; then

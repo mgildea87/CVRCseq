@@ -132,9 +132,9 @@ def rename_ChIP(sample_file):
 
 concat()
 
-if sys.argv[2] == 'CUT-RUN' or sys.argv[2] == 'ChIPseq':
+if sys.argv[2] == 'CUT-RUN_PE' or sys.argv[2] == 'ChIPseq_PE':
 	rename_ChIP(sample_file)
-if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie_nvltrx':
+if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie_nvltrx' or sys.argv[2] == 'ATACseq_PE':
 	rename_RNA_PE(sample_file)
 if sys.argv[2] == 'RNAseq_SE':
 	rename_RNA_SE(sample_file)

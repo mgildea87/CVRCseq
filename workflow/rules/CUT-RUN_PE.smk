@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-for directory in ['CUT-RUN/results', 'CUT-RUN/results/fastqc', 'CUT-RUN/results/fastqc_post_trim', 'CUT-RUN/results/trim', 'CUT-RUN/results/logs', 'CUT-RUN/results/logs/trim_reports', 'CUT-RUN/results/alignment','CUT-RUN/results/alignment/bed', 'CUT-RUN/results/alignment/frag_len', 'CUT-RUN/results/logs/alignment_reports', 'CUT-RUN/results/peaks']:
+for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks']:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 
@@ -46,7 +46,7 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 	params:
-		'CUT-RUN/results/fastqc/'
+		'CUT-RUN_PE/results/fastqc/'
 	shell: 
 		'fastqc {input.fastq} -o {params}'
 
@@ -56,7 +56,7 @@ rule fastqc_post_trim:
 	output:  
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
 	params:
-		'CUT-RUN/results/fastqc_post_trim/'
+		'CUT-RUN_PE/results/fastqc_post_trim/'
 	shell: 
 		'fastqc {input.fastq} -o {params}'
 
@@ -93,7 +93,7 @@ rule align:
 	params:
 		'--end-to-end --very-sensitive --no-mixed --no-unal --no-discordant --phred33 -I 10 -X 700'
 	shell:
-		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > CUT-RUN/results/alignment/{wildcards.sample}.bam' % (genome)
+		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > CUT-RUN_PE/results/alignment/{wildcards.sample}.bam' % (genome)
 
 rule align_spike:
 	input:
@@ -109,7 +109,7 @@ rule align_spike:
 	params:
 		'--end-to-end --very-sensitive --no-overlap --no-dovetail --no-mixed --no-unal --no-discordant --phred33 -I 10 -X 700'
 	shell:
-		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > CUT-RUN/results/alignment/{wildcards.sample}_ecoli.bam' % (spike_genome)
+		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > CUT-RUN_PE/results/alignment/{wildcards.sample}_ecoli.bam' % (spike_genome)
 
 rule sort:
 	input:
@@ -142,14 +142,14 @@ rule spike_in_norm:
 		'results/alignment/bed/{sample}.bedgraph'
 	shell:
 		"""
-		depth=`samtools view CUT-RUN/results/alignment/{wildcards.sample}_ecoli.bam | wc -l`
+		depth=`samtools view CUT-RUN_PE/results/alignment/{wildcards.sample}_ecoli.bam | wc -l`
 		depth=$((depth/2))
 		echo $depth
 		scale_fac=`echo "10000 / $depth" | bc -l`
 		echo $scale_fac
-		bedtools bamtobed -bedpe -i CUT-RUN/results/alignment/{wildcards.sample}.bam | cut -f 1,2,6 | sort -k1,1 -k2,2n -k3,3n > CUT-RUN/results/alignment/bed/{wildcards.sample}.bed
+		bedtools bamtobed -bedpe -i CUT-RUN_PE/results/alignment/{wildcards.sample}.bam | cut -f 1,2,6 | sort -k1,1 -k2,2n -k3,3n > CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bed
 		"""
-		'bedtools genomecov -bg -i CUT-RUN/results/alignment/bed/{wildcards.sample}.bed -scale $scale_fac -g %s > CUT-RUN/results/alignment/bed/{wildcards.sample}.bedgraph' % (chr_lens)
+		'bedtools genomecov -bg -i CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bed -scale $scale_fac -g %s > CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bedgraph' % (chr_lens)
 
 rule SEACR:
 	input:
@@ -160,7 +160,7 @@ rule SEACR:
 	params:
 		'non stringent'
 	shell:
-		'bash SEACR_1.3.sh {input.exp} {input.con} {params} CUT-RUN/results/peaks/{wildcards.sample}'
+		'bash SEACR_1.3.sh {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/{wildcards.sample}'
 
 rule fragment_size:
 	input:

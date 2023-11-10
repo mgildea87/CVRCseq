@@ -16,10 +16,12 @@ There are currently 4 RNA-seq analysis pipelines available
 ## DNA Binding/enrichment 
 There are currently 2 analysis pipelines available
 
-	1.	ChIPseq
+	1.	ChIPseq_PE
 			paired-end data fastqc > fastp > bowtie2 > macs2
-	2.	CUT-RUN
+	2.	CUT-RUN_PE
 			paired-end data fastqc > fastp > bowtie2 > seacr
+	3.	ATACseq_PE
+			paired-end data fastqc > fastp > bowtie2 > macs2
 
 
 # Description of files:
@@ -50,10 +52,12 @@ This file contains required general and workflow specific configuaration info.
 			2. For HISAT2 workflows - HISAT2 index
 			3. For ChIPseq or CUT-RUN - bowtie2 index
 		GTF: location of .gtf file
-	CUT-RUN
+	CUT-RUN_PE
 		spike_genome: Location of spike-in genome index. This is only implemented in CUT-RUN. bowtie2 index
 		chromosome_lengths: location of chromosome lengths file. required for spike-in normalization in CUT-RUN
-	ChIPseq
+	ChIPseq_PE
+		effective_genome_size: Effective genome size for MACS2
+	ATACseq_PE
 		effective_genome_size: Effective genome size for MACS2
 	RNAseq_HISAT2_stringtie or RNAseq_HISAT2_stringtie_nvltrx
 		prepDE_length: Average fragment length for stringtie prepDE script
@@ -101,11 +105,11 @@ This file contains the conda environment info used by this pipeline.
 
 	* Add testing data and tests
 	* Enrichment pipelines
-		* Add ATACseq pipeline
 		* Add irreproducible discovery rate (IDR) for identifying robust peak sets between replicates. See ENCODE pipeline
-		* Add deduplication by default. Likely via Picard prior to peak calling. 
+		* Add deduplication by default. Likely via Picard prior to peak calling. (rn macs does this)
 		* enable more efficient handling of experimental designs where the same input is used for multiple pull-down/antibody samples. e.g. ChIRPseq.
 	* Simplify cat_rename.py to take sample prefixes (text upstream of the lane number '_L00X') supplied via samples_info.tab.
 	* Add parameter to specify output directory name. Right now its given the pipeline name.
+	* Add salmon pipeline for RNAseq
 	* Add rules to snakefiles containing R scripts for some downstream QC and plotting. e.g. for RNAseq: PCA, replicate scatter plots, count statistics or for ATACseq: fragment length distributions, FRP plots, replicate comparisons. 
 

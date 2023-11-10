@@ -3,33 +3,36 @@ with open('config/config.yaml', 'r') as file:
 	config = yaml.safe_load(file)
 workflow = config['workflow']
 sample_file = config['sample_file']
-sample = pd.read_table(sample_file)['Sample']
-replicate = pd.read_table(sample_file)['Replicate']
-condition = pd.read_table(sample_file)['Condition']
-Antibody = pd.read_table(sample_file)['Antibody']
+
+table = pd.read_table(sample_file)
+sample = table['Sample']
+replicate = table['Replicate']
+condition = table['Condition']
 
 #peak files get named different things with macs vs seacr will need to update if peak caller is changed or other workflows are added
-if workflow == 'ChIPseq':
+if workflow == 'ChIPseq' or workflow == 'ATACseq_PE':
 	peak_file_suffix = '_peaks.narrowPeak'
 if workflow == 'CUT-RUN':
 	peak_file_suffix = '.stringent.bed'
 
 print(peak_file_suffix)
 
-sample_ids = []
-for i in range(len(sample)):
-	sample_ids.append('%s_%s_%s' % (sample[i], condition[i], replicate[i]))
-sample_ids = pd.unique(sample_ids).tolist()
-
-sample_ids_file = []
-for i in range(len(sample)):
-	sample_ids_file.append('%s_%s_%s_%s' % (sample[i], condition[i], replicate[i], Antibody[i]))
+if workflow == 'ATACseq_PE':
+	sample_ids = []
+	for i in range(len(sample)):
+		sample_ids.append('%s_%s_%s' % (sample[i], condition[i], replicate[i]))
+	sample_ids = pd.unique(sample_ids).tolist()
+else:
+	Antibody = table['Antibody']
+	sample_ids = []
+	for i in range(len(sample)):
+		sample_ids.append('%s_%s_%s_%s' % (sample[i], condition[i], replicate[i], Antibody[i]))
 
 total_fragments = []
 peak_fragments = []
 
 def FRP(sample, workflow, peak_file_suffix):
-	peak_id = sample.split('_')[0:-1]
+	peak_id = sample.split('_')[0:4]
 	peak_id = "_".join(peak_id)
 	print(sample)
 	cmd_1 = ['bedtools', 'bamtobed', '-bedpe', '-i', '%s/results/alignment/%s.bam' % (workflow, sample)] 
@@ -51,11 +54,11 @@ def FRP(sample, workflow, peak_file_suffix):
 	frag = float(frag)
 	total_fragments.append(frag/2)
 
-for samples in sample_ids_file:
+for samples in sample_ids:
 	FRP(samples, workflow, peak_file_suffix)
 
 with open('%s/results/FRP.txt' % (workflow), 'w') as out:
 	out.write('Sample\tTotal_fragments\tFragments_in_peaks\tFRP\n')
-	for i in range(len(sample_ids_file)):
-		out.write('%s\t%s\t%s\t%s\n' % (sample_ids_file[i], total_fragments[i], peak_fragments[i], peak_fragments[i]/total_fragments[i]))
+	for i in range(len(sample_ids)):
+		out.write('%s\t%s\t%s\t%s\n' % (sample_ids[i], total_fragments[i], peak_fragments[i], peak_fragments[i]/total_fragments[i]))
 	out.close()	

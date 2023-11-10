@@ -21,8 +21,9 @@ Help()
    echo "                             'RNAseq_PE' - paired end reads, fastqc, fastp, STAR, featurecounts"
    echo "                             'RNAseq_PE_HISAT2_stringtie' - paired end reads, fastqc, fastp, HISAT2, stringtie"
    echo "                             'RNAseq_PE_HISAT2_stringtie_nvltrx' - paired end reads, fastqc, fastp, HISAT2, stringtie (novel transcript assembly)"
-   echo "                             'ChIPseq' - paired end reads, fastqc, fastp, bowtie2, macs2"
-   echo "                             'CUT-RUN' - paired end reads, fastqc, fastp, bowtie2, seacr"
+   echo "                             'ChIPseq_PE' - paired end reads, fastqc, fastp, bowtie2, macs2"
+   echo "                             'CUT-RUN_PE' - paired end reads, fastqc, fastp, bowtie2, seacr"
+   echo "                             'ATACseq_PE' - paired end reads, fastqc, fastp, bowtie2, macs2"  
    echo
 }
 
@@ -39,7 +40,7 @@ while getopts ":c:w:d:h" arg; do
 done
 
 #Check if workflow (-w) exists in available workflows. If not, exit.
-workflow_options=( "RNAseq_SE" "RNAseq_PE" "RNAseq_PE_HISAT2_stringtie" "RNAseq_PE_HISAT2_stringtie_nvltrx" "ChIPseq" "CUT-RUN" )
+workflow_options=( "RNAseq_SE" "RNAseq_PE" "RNAseq_PE_HISAT2_stringtie" "RNAseq_PE_HISAT2_stringtie_nvltrx" "ChIPseq_PE" "CUT-RUN_PE" "ATACseq_PE" )
 
 if printf '%s\n' "${workflow_options[@]}" | grep -Fxq -- $workflow; then
     echo $workflow

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-for directory in ['ChIPseq/results', 'ChIPseq/results/fastqc', 'ChIPseq/results/fastqc_post_trim', 'ChIPseq/results/trim', 'ChIPseq/results/logs', 'ChIPseq/results/logs/trim_reports', 'ChIPseq/results/alignment', 'ChIPseq/results/alignment/frag_len', 'ChIPseq/results/logs/alignment_reports', 'ChIPseq/results/peaks', 'ChIPseq/results/logs/MACS2']:
+for directory in ['ChIPseq_PE/results', 'ChIPseq_PE/results/fastqc', 'ChIPseq_PE/results/fastqc_post_trim', 'ChIPseq_PE/results/trim', 'ChIPseq_PE/results/logs', 'ChIPseq_PE/results/logs/trim_reports', 'ChIPseq_PE/results/alignment', 'ChIPseq_PE/results/alignment/frag_len', 'ChIPseq_PE/results/logs/alignment_reports', 'ChIPseq_PE/results/peaks', 'ChIPseq_PE/results/logs/MACS2']:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 
@@ -45,7 +45,7 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 	params:
-		'ChIPseq/results/fastqc/'
+		'ChIPseq_PE/results/fastqc/'
 	shell: 
 		'fastqc {input.fastq} -o {params}'
 
@@ -55,7 +55,7 @@ rule fastqc_post_trim:
 	output:  
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
 	params:
-		'ChIPseq/results/fastqc_post_trim/'
+		'ChIPseq_PE/results/fastqc_post_trim/'
 	shell: 
 		'fastqc {input.fastq} -o {params}'
 
@@ -92,7 +92,7 @@ rule align:
 	params:
 		'--end-to-end --very-sensitive --no-mixed --no-unal --no-discordant --phred33'
 	shell:
-		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > ChIPseq/results/alignment/{wildcards.sample}.bam' % (genome)
+		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > ChIPseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
 
 rule sort:
 	input:
@@ -125,7 +125,7 @@ rule MACS2:
   	log:
   		'results/logs/MACS2/{sample}.log'
   	params:
-  		'-B --outdir ChIPseq/results/peaks/ -g %s -q 0.05 --keep-dup auto' % (effective_genome_size)
+  		'-B --outdir ChIPseq_PE/results/peaks/ -g %s -q 0.05 --keep-dup auto -f BAMPE' % (effective_genome_size)
   	shell:
   		'macs2 callpeak -t {input.exp} -c {input.con} {params} -n {wildcards.sample} 2> {log}'
 

@@ -15,8 +15,6 @@ if workflow == 'ChIPseq' or workflow == 'ATACseq_PE':
 if workflow == 'CUT-RUN':
 	peak_file_suffix = '.stringent.bed'
 
-print(peak_file_suffix)
-
 if workflow == 'ATACseq_PE':
 	sample_ids = []
 	for i in range(len(sample)):
@@ -31,23 +29,26 @@ else:
 total_fragments = []
 peak_fragments = []
 
+
 def FRP(sample, workflow, peak_file_suffix):
 	peak_id = sample.split('_')[0:4]
 	peak_id = "_".join(peak_id)
 	print(sample)
-	cmd_1 = ['bedtools', 'bamtobed', '-bedpe', '-i', '%s/results/alignment/%s.bam' % (workflow, sample)] 
-	cmd_2 = ['bedtools', 'intersect', '-a', 'stdin', '-b', '%s/results/peaks/%s%s' % (workflow, peak_id, peak_file_suffix)]
-	cmd_3 = ['wc', '-l']
+	cmd_1 = ['samtools', 'sort', '-n', '-@', '8', '-m', '3G', '%s/results/alignment/%s.bam' % (workflow, sample)] 
+	cmd_2 = ['bedtools', 'bamtobed', '-bedpe', '-i', 'stdin'] 
+	cmd_3 = ['bedtools', 'intersect', '-a', 'stdin', '-b', '%s/results/peaks/%s%s' % (workflow, peak_id, peak_file_suffix), '-u']
+	cmd_4 = ['wc', '-l']
 	step_1 = subprocess.Popen(cmd_1, stdout=subprocess.PIPE)
 	step_2 = subprocess.Popen(cmd_2, stdin = step_1.stdout, stdout=subprocess.PIPE)
 	step_3 = subprocess.Popen(cmd_3, stdin = step_2.stdout, stdout=subprocess.PIPE)
-	frag_peaks = step_3.stdout.read()
+	step_4 = subprocess.Popen(cmd_4, stdin = step_3.stdout, stdout=subprocess.PIPE)
+	frag_peaks = step_4.stdout.read()
 	frag_peaks.strip()
 	peak_fragments.append(float(frag_peaks))
 
-	cmd_4 = ['samtools', 'view', '%s/results/alignment/%s.bam' % (workflow, sample)]
-	step_1 = subprocess.Popen(cmd_4, stdout=subprocess.PIPE)
-	step_2 = subprocess.Popen(cmd_3, stdin = step_1.stdout, stdout=subprocess.PIPE)
+	cmd_5 = ['samtools', 'view', '%s/results/alignment/%s.bam' % (workflow, sample)]
+	step_1 = subprocess.Popen(cmd_5, stdout=subprocess.PIPE)
+	step_2 = subprocess.Popen(cmd_4, stdin = step_1.stdout, stdout=subprocess.PIPE)
 
 	frag = step_2.stdout.read()
 	frag.strip()

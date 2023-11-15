@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-for directory in ['ATACseq_PE/results', 'ATACseq_PE/results/fastqc', 'ATACseq_PE/results/fastqc_post_trim', 'ATACseq_PE/results/trim', 'ATACseq_PE/results/logs', 'ATACseq_PE/results/logs/trim_reports', 'ATACseq_PE/results/alignment', 'ATACseq_PE/results/alignment/frag_len', 'ATACseq_PE/results/logs/alignment_reports', 'ATACseq_PE/results/peaks', 'ATACseq_PE/results/logs/MACS2']:
+for directory in ['ATACseq_PE/results', 'ATACseq_PE/results/fastqc', 'ATACseq_PE/results/fastqc_post_trim', 'ATACseq_PE/results/trim', 'ATACseq_PE/results/logs', 'ATACseq_PE/results/logs/trim_reports', 'ATACseq_PE/results/alignment', 'ATACseq_PE/results/alignment/frag_len', 'ATACseq_PE/results/alignment/idxstat', 'ATACseq_PE/results/logs/alignment_reports', 'ATACseq_PE/results/peaks', 'ATACseq_PE/results/logs/MACS2']:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 
@@ -30,15 +30,17 @@ rule all:
 		expand('results/fastqc_post_trim/{sample_file}_trimmed{read}_fastqc.html', sample_file = sample_ids, read = read),
 		expand('results/peaks/{sample}_peaks.narrowPeak', sample = sample_ids),
 		'results/FRP.txt',
-		expand('results/alignment/{sample}_sorted.bam', sample = sample_ids),
-		expand('results/alignment/{sample}_sorted.bam.bai', sample = sample_ids),
-		expand('results/alignment/frag_len/{sample}.txt', sample = sample_ids)
+		expand('results/alignment/{sample}.bam', sample = sample_ids),
+		expand('results/alignment/{sample}_filtered_sorted.bam', sample = sample_ids),
+		expand('results/alignment/{sample}_filtered_sorted.bam.bai', sample = sample_ids),
+		expand('results/alignment/frag_len/{sample}.txt', sample = sample_ids),
+		expand('results/alignment/idxstat/{sample}_idxstat.tab', sample = sample_ids)
 
 rule fastqc:
 	input: 
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc/{sample}{read}_fastqc.html",
+		"results/fastqc/{sample}{read}_fastqc.html"
 	params:
 		'ATACseq_PE/results/fastqc/'
 	shell: 
@@ -48,7 +50,7 @@ rule fastqc_post_trim:
 	input: 
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
+		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
 	params:
 		'ATACseq_PE/results/fastqc_post_trim/'
 	shell: 
@@ -81,7 +83,7 @@ rule align:
 		'results/alignment/{sample}.bam'
 	threads: 30
 	resources: 
-		time_min=240, mem_mb=60000, cpus=30
+		time_min=360, mem_mb=60000, cpus=30
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -89,33 +91,42 @@ rule align:
 	shell:
 		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > ATACseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
 
-rule sort:
+rule filter_bam:
 	input:
 		'results/alignment/{sample}.bam'
 	output:
-		'results/alignment/{sample}_sorted.bam'	
-	threads: 20
+		'results/alignment/{sample}_filtered_sorted.bam'
+	threads: 8
 	resources: 
-		time_min=240, mem_mb=20000, cpus=20
+		time_min=240, mem_mb=30000, cpus=8
 	shell:
-		'samtools sort -@ {threads} {input} > {output}'
+		'samtools view -h {input} | grep -v chrM | samtools view -bh | samtools sort -@ {threads} > ATACseq_PE/results/alignment/{wildcards.sample}_filtered_sorted.bam'
 
 rule index:
 	input:
-		'results/alignment/{sample}_sorted.bam'
+		'results/alignment/{sample}_filtered_sorted.bam'
 	output:
-		'results/alignment/{sample}_sorted.bam.bai'	
+		'results/alignment/{sample}_filtered_sorted.bam.bai'	
 	threads: 20
 	resources: 
-		time_min=240, mem_mb=20000, cpus=20
+		time_min=240, mem_mb=30000, cpus=20
 	shell:
-		'samtools index -@ {threads} {input} > {output}'		
+		'samtools index -@ {threads} {input} > {output}'
+
+rule idxstat:
+	input:
+		bam='results/alignment/{sample}_filtered_sorted.bam',
+		ind='results/alignment/{sample}_filtered_sorted.bam.bai'
+	output:
+		'results/alignment/idxstat/{sample}_idxstat.tab'
+	shell:
+		'samtools idxstat {input.bam} > {output}'
 
 rule bam2bed:
 	input:
-		'results/alignment/{sample}.bam'
+		'results/alignment/{sample}_filtered_sorted.bam'
 	output:
-		'results/alignment/{sample}.bed'
+		'results/alignment/{sample}_filtered_sorted.bed'
 	shell:
 		"""
 		bedtools bamtobed -i {input} | awk -F$'\t' 'BEGIN {{OFS = FS}}{{ if ($6 == "+") {{$2 = $2 + 4}} else if ($6 == "-") {{$3 = $3 - 5}} print $0}}' > {output}
@@ -123,7 +134,7 @@ rule bam2bed:
 
 rule MACS2:
 	input:
-		exp='results/alignment/{sample}.bed'
+		exp='results/alignment/{sample}_filtered_sorted.bed'
 	output:
 		'results/peaks/{sample}_peaks.narrowPeak'
 	log:
@@ -135,7 +146,7 @@ rule MACS2:
 
 rule fragment_size:
 	input:
-		'results/alignment/{sample}.bam'
+		'results/alignment/{sample}_filtered_sorted.bam'
 	output:
 		'results/alignment/frag_len/{sample}.txt'
 	shell:
@@ -144,9 +155,11 @@ rule fragment_size:
 		"""
 
 rule FRP:
- 	input:
- 		expand('results/peaks/{sample}_peaks.narrowPeak', sample = sample_ids)
- 	output:
- 		'results/FRP.txt'
- 	script:
- 		'../scripts/FRP.py'
+	input:
+		expand('results/peaks/{sample}_peaks.narrowPeak', sample = sample_ids)
+	output:
+		'results/FRP.txt'
+	resources:
+		time_min=240, mem_mb=30000, cpus=8
+	script:
+		'../scripts/FRP.py'

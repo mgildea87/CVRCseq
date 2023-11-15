@@ -14,7 +14,7 @@ There are currently 4 RNA-seq analysis pipelines available
 			paired-end data fastqc > fastp > HISAT2 > stringtie novel transcript identification
 
 ## DNA Binding/enrichment 
-There are currently 2 analysis pipelines available
+There are currently 3 analysis pipelines available
 
 	1.	ChIPseq_PE
 			paired-end data fastqc > fastp > bowtie2 > macs2
@@ -50,7 +50,7 @@ This file contains required general and workflow specific configuaration info.
 		genome: location of indexed genome. 
 			1. For RNAseq_PE or RNAseq_SE - star 2.7.7a index
 			2. For HISAT2 workflows - HISAT2 index
-			3. For ChIPseq or CUT-RUN - bowtie2 index
+			3. For ChIPseq/CUT-RUN/ATACseq - bowtie2 index
 		GTF: location of .gtf file
 	CUT-RUN_PE
 		spike_genome: Location of spike-in genome index. This is only implemented in CUT-RUN. bowtie2 index

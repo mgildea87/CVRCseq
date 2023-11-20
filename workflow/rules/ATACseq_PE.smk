@@ -89,7 +89,7 @@ rule align:
 	params:
 		'--end-to-end --very-sensitive --no-mixed --no-unal --no-discordant --phred33'
 	shell:
-		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 > ATACseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
+		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 | samtools sort -@ {threads} > ATACseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
 
 rule filter_bam:
 	input:
@@ -100,7 +100,7 @@ rule filter_bam:
 	resources: 
 		time_min=240, mem_mb=30000, cpus=8
 	shell:
-		'samtools view -h {input} | grep -v chrM | samtools view -bh | samtools sort -@ {threads} > ATACseq_PE/results/alignment/{wildcards.sample}_filtered_sorted.bam'
+		'samtools view -h {input} | grep -v chrM | samtools view -bh > ATACseq_PE/results/alignment/{wildcards.sample}_filtered_sorted.bam'
 
 rule index:
 	input:
@@ -115,8 +115,7 @@ rule index:
 
 rule idxstat:
 	input:
-		bam='results/alignment/{sample}_filtered_sorted.bam',
-		ind='results/alignment/{sample}_filtered_sorted.bam.bai'
+		bam='results/alignment/{sample}.bam'
 	output:
 		'results/alignment/idxstat/{sample}_idxstat.tab'
 	shell:

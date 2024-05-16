@@ -72,6 +72,7 @@ This file contains the default slurm resources for each rule
 		2. Renames the fastq files from the generally verbose ids given by the sequencing center to those supplied in Samples_info.tab.
 		3. The sample name, condition, and replicate columns are concatenated and form the new sample_id_Rx.fastq.gz files
 		4. This script is executed via snakemake_init.sh prior to launching the appropriate snakemake pipeline
+
 ## workflow/scripts/snakemake_init.sh
 	
 	This bash script:
@@ -98,7 +99,6 @@ This file contains the conda environment info used by this pipeline.
 			Description of parameters
 				-h	help"
 				-d	.fastq directory"
-				-c	Absolute path to conda environment"
 				-w	workflow
 
 # To-do

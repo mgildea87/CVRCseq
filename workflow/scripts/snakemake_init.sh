@@ -8,14 +8,13 @@ Help()
    echo
    echo "CVRCseq"
    echo
-   echo "   This script exectues scripts/cat_rename.py to concatenate .fastq files from multiple lanes and renames them based on config/samples_info.tab. It then launches the appropriate pipeline"
-   echo "   For more detail see github/...."
+   echo "   This script exectues scripts/cat_rename.py to concatenate .fastq files from multiple lanes and renames them based on config/samples_info.tab. It then loads the conda environment via condaload_CVRCseq.sh. Finally, it launches the appropriate pipeline"
+   echo "   For more detail see https://github.com/mgildea87/CVRCseq"
    echo
    echo "   Syntax: scriptTemplate [-h|-c|-w|-d]"
    echo "       options:"
    echo "           -h     help"
    echo "           -d     .fastq directory"
-   echo "           -c     Absolute path to conda environment"
    echo "           -w     workflow. Can be 1 of:"
    echo "                             'RNAseq_SE' - single end reads, fastqc, fastp, STAR, featurecounts"
    echo "                             'RNAseq_PE' - paired end reads, fastqc, fastp, STAR, featurecounts"
@@ -28,9 +27,8 @@ Help()
 }
 
 #parse arguments
-while getopts ":c:w:d:h" arg; do
+while getopts ":w:d:h" arg; do
     case $arg in
-        c) conda_env=$OPTARG;;
         w) workflow=$OPTARG;;
         d) fastq_directory=$OPTARG;;
         h) # display help 
@@ -49,10 +47,12 @@ else
     exit
 fi
 
-module load miniconda3/cpu/4.9.2
-conda activate $conda_env
+# load conda environment
+source workflow/scripts/condaload_CVRCseq.sh
 mkdir -p "$workflow"/inputs/fastq
 mkdir slurm_logs
+
+printf "fastq_directory: %s\nworkflow: %s\n" "$fastq_directory" "$workflow" > snakemake_init_commands.txt
 
 #exit if this script errors
 if ! python workflow/scripts/cat_rename.py $fastq_directory $workflow ${1}; then

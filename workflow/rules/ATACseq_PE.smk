@@ -31,10 +31,16 @@ rule all:
 		expand('results/peaks/{sample}_peaks.narrowPeak', sample = sample_ids),
 		'results/FRP.txt',
 		expand('results/alignment/{sample}.bam', sample = sample_ids),
+		expand('results/alignment/{sample}.bam.bai', sample = sample_ids),
+		expand('results/alignment/{sample}_dedup.bam', sample = sample_ids),
+		expand('results/alignment/{sample}_dedup.bam.bai', sample = sample_ids),
 		expand('results/alignment/{sample}_filtered_sorted.bam', sample = sample_ids),
 		expand('results/alignment/{sample}_filtered_sorted.bam.bai', sample = sample_ids),
+		expand('results/alignment/{sample}_dedup_filtered_sorted.bam', sample = sample_ids),
+		expand('results/alignment/{sample}_dedup_filtered_sorted.bam.bai', sample = sample_ids),
 		expand('results/alignment/frag_len/{sample}.txt', sample = sample_ids),
-		expand('results/alignment/idxstat/{sample}_idxstat.tab', sample = sample_ids)
+		expand('results/alignment/idxstat/{sample}_idxstat.tab', sample = sample_ids),
+		expand('results/alignment/idxstat/{sample}_dedup_idxstat.tab', sample = sample_ids)
 
 rule fastqc:
 	input: 
@@ -89,7 +95,34 @@ rule align:
 	params:
 		'--end-to-end --very-sensitive --no-mixed --no-unal --no-discordant --phred33'
 	shell:
-		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 | samtools sort -@ {threads} > ATACseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
+		'bowtie2 {params} -x %s --threads {threads} -1 {input.R1} -2 {input.R2} 2> {log} | samtools view -bh -q 3 -f 3 | samtools sort -@ {threads} > ATACseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
+
+rule idxstat:
+	input:
+		bam=expand('results/alignment/{sample}.bam', sample = sample_ids)
+	output:
+		idx=expand('results/alignment/idxstat/{sample}_idxstat.tab', sample = sample_ids)
+	shell:
+		'samtools idxstat {input.bam} > {output.idx}'
+
+rule dedup_bam:
+	input:
+		bam='results/alignment/{sample}.bam'
+	output:
+		'results/alignment/{sample}_dedup.bam'
+	threads: 20
+	resources: 
+		time_min=120, mem_mb=30000, cpus=20	
+	shell:
+		'samtools collate {input} -O -@ {threads} | samtools fixmate -m -@ {threads} - - | samtools sort -@ {threads} | samtools markdup - ATACseq_PE/results/alignment/{wildcards.sample}_dedup.bam -@ {threads} -rsS'
+
+rule idxstat_dedup:
+	input:
+		bam=expand('results/alignment/{sample}_dedup.bam', sample = sample_ids)
+	output:
+		idx=expand('results/alignment/idxstat/{sample}_dedup_idxstat.tab', sample = sample_ids)
+	shell:
+		'samtools idxstat {input.bam} > {output.idx}'	
 
 rule filter_bam:
 	input:
@@ -100,32 +133,26 @@ rule filter_bam:
 	resources: 
 		time_min=240, mem_mb=30000, cpus=8
 	shell:
-		'samtools view -h {input} | grep -v chrM | samtools view -bh > ATACseq_PE/results/alignment/{wildcards.sample}_filtered_sorted.bam'
+		'samtools view -h {input} | grep -v chrM | samtools view -bh > {output}'
+
 
 rule index:
 	input:
-		'results/alignment/{sample}_filtered_sorted.bam'
+		'results/alignment/{sample}.bam'
 	output:
-		'results/alignment/{sample}_filtered_sorted.bam.bai'	
+		'results/alignment/{sample}.bam.bai'	
 	threads: 20
 	resources: 
 		time_min=240, mem_mb=30000, cpus=20
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
 
-rule idxstat:
-	input:
-		bam='results/alignment/{sample}.bam'
-	output:
-		'results/alignment/idxstat/{sample}_idxstat.tab'
-	shell:
-		'samtools idxstat {input.bam} > {output}'
 
 rule bam2bed:
 	input:
-		'results/alignment/{sample}_filtered_sorted.bam'
+		'results/alignment/{sample}_dedup_filtered_sorted.bam'
 	output:
-		'results/alignment/{sample}_filtered_sorted.bed'
+		'results/alignment/{sample}_dedup_filtered_sorted.bed'
 	shell:
 		"""
 		bedtools bamtobed -i {input} | awk -F$'\t' 'BEGIN {{OFS = FS}}{{ if ($6 == "+") {{$2 = $2 + 4}} else if ($6 == "-") {{$3 = $3 - 5}} print $0}}' > {output}
@@ -133,19 +160,19 @@ rule bam2bed:
 
 rule MACS2:
 	input:
-		exp='results/alignment/{sample}_filtered_sorted.bed'
+		exp='results/alignment/{sample}_dedup_filtered_sorted.bed'
 	output:
 		'results/peaks/{sample}_peaks.narrowPeak'
 	log:
 		'results/logs/MACS2/{sample}.log'
 	params:
-		'-B --outdir ATACseq_PE/results/peaks/ -g %s -p 0.01 --keep-dup auto -f BED --nomodel --shift -75 --extsize 150 --call-summits' % (effective_genome_size)
+		'-B --outdir ATACseq_PE/results/peaks/ -g %s -p 0.01 --keep-dup all -f BED --nomodel --shift -75 --extsize 150 --call-summits' % (effective_genome_size)
 	shell:
 		'macs2 callpeak -t {input.exp} {params} -n {wildcards.sample} 2> {log}'
 
 rule fragment_size:
 	input:
-		'results/alignment/{sample}_filtered_sorted.bam'
+		'results/alignment/{sample}_dedup_filtered_sorted.bam'
 	output:
 		'results/alignment/frag_len/{sample}.txt'
 	shell:

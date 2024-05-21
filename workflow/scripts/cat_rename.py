@@ -103,6 +103,7 @@ def rename_RNA_PE(sample_table):
 	# Remove unused files
 	for file in files_initial:
 		if os.path.exists('%s/%s' % (cur_dir,file)):
+			print('rm %s/%s' % (cur_dir,file))
 			os.system('rm %s/%s' % (cur_dir,file))
 
 def rename_ChIP(sample_table):

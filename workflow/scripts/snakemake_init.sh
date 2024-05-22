@@ -11,10 +11,11 @@ Help()
    echo "   This script exectues scripts/cat_rename.py to concatenate .fastq files from multiple lanes and renames them based on config/samples_info.tab. It then loads the conda environment via condaload_CVRCseq.sh. Finally, it launches the appropriate pipeline"
    echo "   For more detail see https://github.com/mgildea87/CVRCseq"
    echo
-   echo "   Syntax: scriptTemplate [-h|-c|-w|-d]"
+   echo "   Syntax: scriptTemplate [-h|-s|-w|-d]"
    echo "       options:"
    echo "           -h     help"
    echo "           -d     .fastq directory"
+   echo "           -s     arguments to pass to snakemake"
    echo "           -w     workflow. Can be 1 of:"
    echo "                             'RNAseq_SE' - single end reads, fastqc, fastp, STAR, featurecounts"
    echo "                             'RNAseq_PE' - paired end reads, fastqc, fastp, STAR, featurecounts"
@@ -27,9 +28,10 @@ Help()
 }
 
 #parse arguments
-while getopts ":w:d:h" arg; do
+while getopts ":w:s:d:h" arg; do
     case $arg in
         w) workflow=$OPTARG;;
+        s) snakemake_arg=$OPTARG;;
         d) fastq_directory=$OPTARG;;
         h) # display help 
             Help
@@ -61,6 +63,6 @@ if ! python workflow/scripts/cat_rename.py $fastq_directory $workflow ${1}; then
 fi
 
 #launch snakemake
-snakemake --profile config/profile --config workflow=$workflow
+snakemake "$snakemake_arg" --profile config/profile --config workflow=$workflow
 snakemake --report workflow/snake_make_report.html
-multiqc .
+multiqc . --force

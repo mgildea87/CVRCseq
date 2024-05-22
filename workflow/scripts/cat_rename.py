@@ -14,6 +14,7 @@ def concat(sample_table):
 	fast_dir = sys.argv[1]
 	files = os.listdir(fast_dir)
 	samples = {}
+	concat_file_names = []
 	for file in files:
 		file = '%s%s' % (fast_dir, file)
 		if 'L00' in file:
@@ -32,9 +33,11 @@ def concat(sample_table):
 		com.insert(0, 'cat')
 		with open('%s%s' % (cur_dir, sample.split('/')[-1]), 'w') as R1:			
 			subprocess.run(com, stdout=R1)
+			concat_file_names.append('%s%s' % (cur_dir, sample.split('/')[-1]))
+	return(concat_file_names)
 
 #rename samples based on sample ids in samples_info.tab. This differs with different workflows
-def rename_RNA_SE(sample_table):
+def rename_RNA_SE(sample_table, concat_file_names):
 	cur_dir = sys.argv[2]+'/inputs/fastq'
 	sample = sample_table['Sample']
 	replicate = sample_table['Replicate']
@@ -58,10 +61,11 @@ def rename_RNA_SE(sample_table):
 			sys.exit(1)
 	
 	# Remove unused files
-	for file in files_initial:
-		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('rm %s/%s' % (cur_dir,file))
-def rename_RNA_PE(sample_table):
+	for file in concat_file_names:
+		if os.path.exists(file):
+			os.system('rm %s' % (file))
+
+def rename_RNA_PE(sample_table, concat_file_names):
 	cur_dir = sys.argv[2]+'/inputs/fastq'
 	sample = sample_table['Sample']
 	replicate = sample_table['Replicate']
@@ -101,12 +105,11 @@ def rename_RNA_PE(sample_table):
 			sys.exit(1)
 
 	# Remove unused files
-	for file in files_initial:
-		if os.path.exists('%s/%s' % (cur_dir,file)):
-			print('rm %s/%s' % (cur_dir,file))
-			os.system('rm %s/%s' % (cur_dir,file))
+	for file in concat_file_names:
+		if os.path.exists(file):
+			os.system('rm %s' % (file))
 
-def rename_ChIP(sample_table):
+def rename_ChIP(sample_table, concat_file_names):
 	cur_dir = sys.argv[2]+'/inputs/fastq'
 	sample = sample_table['Sample']
 	replicate = sample_table['Replicate']
@@ -146,15 +149,15 @@ def rename_ChIP(sample_table):
 			sys.exit(1)
 
 	# Remove unused files
-	for file in files_initial:
-		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('rm %s/%s' % (cur_dir,file))
+	for file in concat_file_names:
+		if os.path.exists(file):
+			os.system('rm %s' % (file))
 
-concat(sample_table)
+concat_file_names = concat(sample_table)
 
 if sys.argv[2] == 'CUT-RUN_PE' or sys.argv[2] == 'ChIPseq_PE':
-	rename_ChIP(sample_table)
+	rename_ChIP(sample_table, concat_file_names)
 if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie_nvltrx' or sys.argv[2] == 'ATACseq_PE':
-	rename_RNA_PE(sample_table)
+	rename_RNA_PE(sample_table, concat_file_names)
 if sys.argv[2] == 'RNAseq_SE':
-	rename_RNA_SE(sample_table)
+	rename_RNA_SE(sample_table, concat_file_names)

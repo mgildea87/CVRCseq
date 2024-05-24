@@ -77,10 +77,12 @@ This file contains the default slurm resources for each rule
 	
 	This bash script:
 		1. Executes cat_rename.py
-		2. loads the miniconda3/cpu/4.9.2 module on Ultraviolet
+		2. executes conda_load script
 		3. Executes snakemake
 		4. Runs multiqc
 
+## workflow/scripts/condaload_CVRCseq.sh
+This script sets some environment variable and loads the conda environment.
 
 ## workflow/scripts/FRP.py
 This file computes the fraction of reads in peaks (FRP) and outputs a table with FRP, total fragments, and fragments within peaks.
@@ -99,6 +101,7 @@ This file contains the conda environment info used by this pipeline.
 			Description of parameters
 				-h	help"
 				-d	.fastq directory"
+				-s  parameters to pass to snakemake (e.g. --unlock)
 				-w	workflow
 
 # To-do

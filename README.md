@@ -101,7 +101,7 @@ This file contains the conda environment info used by this pipeline.
 			Description of parameters
 				-h	help"
 				-d	.fastq directory"
-				-s  parameters to pass to snakemake (e.g. --unlock)
+				-s	parameters to pass to snakemake (e.g. --unlock)
 				-w	workflow
 
 # To-do

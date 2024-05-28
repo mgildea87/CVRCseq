@@ -8,8 +8,11 @@ sample_file = config['sample_file']
 
 sample_table = pd.read_table(sample_file)
 
+
+#re write this to work backwards from sample table. Do not copy files that already exist in the local fastq directory
 #Combine fastq files from multiple lanes
 def concat(sample_table):
+	print(sample_table['File_Name_R1'].values)
 	cur_dir = sys.argv[2]+'/inputs/fastq/'
 	fast_dir = sys.argv[1]
 	files = os.listdir(fast_dir)
@@ -161,3 +164,4 @@ if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or 
 	rename_RNA_PE(sample_table, concat_file_names)
 if sys.argv[2] == 'RNAseq_SE':
 	rename_RNA_SE(sample_table, concat_file_names)
+

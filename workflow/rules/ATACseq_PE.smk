@@ -99,9 +99,11 @@ rule align:
 
 rule idxstat:
 	input:
-		bam=expand('results/alignment/{sample}.bam', sample = sample_ids)
+		bam='results/alignment/{sample}.bam'
 	output:
-		idx=expand('results/alignment/idxstat/{sample}_idxstat.tab', sample = sample_ids)
+		idx='results/alignment/idxstat/{sample}_idxstat.tab'
+	resources: 
+		time_min=10, mem_mb=5000, cpus=1		
 	shell:
 		'samtools idxstat {input.bam} > {output.idx}'
 
@@ -116,13 +118,6 @@ rule dedup_bam:
 	shell:
 		'samtools collate {input} -O -@ {threads} | samtools fixmate -m -@ {threads} - - | samtools sort -@ {threads} | samtools markdup - ATACseq_PE/results/alignment/{wildcards.sample}_dedup.bam -@ {threads} -rsS'
 
-rule idxstat_dedup:
-	input:
-		bam=expand('results/alignment/{sample}_dedup.bam', sample = sample_ids)
-	output:
-		idx=expand('results/alignment/idxstat/{sample}_dedup_idxstat.tab', sample = sample_ids)
-	shell:
-		'samtools idxstat {input.bam} > {output.idx}'	
 
 rule filter_bam:
 	input:

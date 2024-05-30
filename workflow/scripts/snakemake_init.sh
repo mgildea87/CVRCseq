@@ -63,6 +63,6 @@ if ! python workflow/scripts/cat_rename.py $fastq_directory $workflow ${1}; then
 fi
 
 #launch snakemake
-snakemake "$snakemake_arg" --profile config/profile --config workflow=$workflow
+snakemake $snakemake_arg --profile config/profile --config workflow=$workflow
 snakemake --report workflow/snake_make_report.html
 multiqc . --force

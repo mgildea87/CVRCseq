@@ -10,7 +10,7 @@ replicate = table['Replicate']
 condition = table['Condition']
 
 #peak files get named different things with macs vs seacr will need to update if peak caller is changed or other workflows are added
-if workflow == 'ChIPseq' or workflow == 'ATACseq_PE':
+if workflow == 'ChIPseq_PE' or workflow == 'ATACseq_PE':
 	peak_file_suffix = '_peaks.narrowPeak'
 if workflow == 'CUT-RUN':
 	peak_file_suffix = '.stringent.bed'

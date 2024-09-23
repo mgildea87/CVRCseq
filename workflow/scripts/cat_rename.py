@@ -8,6 +8,7 @@ sample_file = config['sample_file']
 
 sample_table = pd.read_table(sample_file)
 
+#Add rule to copy files if 
 
 #re write this to work backwards from sample table. Do not copy files that already exist in the local fastq directory
 #Combine fastq files from multiple lanes
@@ -58,7 +59,7 @@ def rename_RNA_SE(sample_table, concat_file_names):
 		if os.path.exists('%s/%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])):
 			continue
 		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('mv %s/%s %s/%s_%s_%s_R1.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
+			os.system('cp %s/%s %s/%s_%s_%s_R1.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 		elif os.path.exists('%s/%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_R1.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 			sys.exit(1)
@@ -87,7 +88,7 @@ def rename_RNA_PE(sample_table, concat_file_names):
 		if os.path.exists('%s/%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])):
 			continue
 		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('mv %s/%s %s/%s_%s_%s_R1.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
+			os.system('cp %s/%s %s/%s_%s_%s_R1.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 		elif os.path.exists('%s/%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_R1.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 			sys.exit(1)
@@ -102,7 +103,7 @@ def rename_RNA_PE(sample_table, concat_file_names):
 		if os.path.exists('%s/%s_%s_%s_R2.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])):
 			continue
 		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('mv %s/%s %s/%s_%s_%s_R2.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
+			os.system('cp %s/%s %s/%s_%s_%s_R2.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 		elif os.path.exists('%s/%s_%s_%s_R2.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_R2.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 			sys.exit(1)
@@ -132,7 +133,7 @@ def rename_ChIP(sample_table, concat_file_names):
 		if os.path.exists('%s/%s_%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i], Antibody[i])):
 			continue
 		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('mv %s/%s %s/%s_%s_%s_%s_R1.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
+			os.system('cp %s/%s %s/%s_%s_%s_%s_R1.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
 		elif os.path.exists('%s/%s_%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i], Antibody[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_%s_R1.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
 			sys.exit(1)
@@ -146,7 +147,7 @@ def rename_ChIP(sample_table, concat_file_names):
 		if os.path.exists('%s/%s_%s_%s_%s_R2.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i], Antibody[i])):
 			continue
 		if os.path.exists('%s/%s' % (cur_dir,file)):
-			os.system('mv %s/%s %s/%s_%s_%s_%s_R2.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
+			os.system('cp %s/%s %s/%s_%s_%s_%s_R2.fastq.gz' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
 		elif os.path.exists('%s/%s_%s_%s_%s_R2.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i], Antibody[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_%s_R2.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
 			sys.exit(1)

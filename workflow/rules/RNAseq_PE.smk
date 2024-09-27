@@ -94,7 +94,7 @@ rule count:
 	resources: 
 		time_min=480, mem_mb=30000, cpus=20
 	params:
-		'-p -g gene_id -s 2 -Q 5 --extraAttributes gene_type,gene_name'
+		'-p --countReadPairs -g gene_id -s 2 -Q 5 --extraAttributes gene_type,gene_name'
 	shell:
 		'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
 

@@ -72,6 +72,7 @@ This file contains the default slurm resources for each rule
 		2. Renames the fastq files from the generally verbose ids given by the sequencing center to those supplied in Samples_info.tab.
 		3. The sample name, condition, and replicate columns are concatenated and form the new sample_id_Rx.fastq.gz files
 		4. This script is executed via snakemake_init.sh prior to launching the appropriate snakemake pipeline
+	Skip this script with the -c option when launching pipeline with snakemake_init.sh
 
 ## workflow/scripts/snakemake_init.sh
 	
@@ -80,6 +81,9 @@ This file contains the default slurm resources for each rule
 		2. executes conda_load script
 		3. Executes snakemake
 		4. Runs multiqc
+
+## workflow/scripts/launch_sbatch.sh
+This script will launch the pipeline from a compute node vs a login node. We should always do this. Edit the snakemake_init.sh command in the script with desired parameters and launch via sbatch. 
 
 ## workflow/scripts/condaload_CVRCseq.sh
 This script sets some environment variable and loads the conda environment.
@@ -102,15 +106,17 @@ This file contains the conda environment info used by this pipeline.
 				-h	help"
 				-d	.fastq directory"
 				-s	parameters to pass to snakemake (e.g. --unlock)
-				-w	workflow
+				-w	workflow name (e.g. 'RNAseq_PE')
+				-c  Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to local directory
 
 # To-do
 
 	* Add testing data and tests
 	* Enrichment pipelines
 		* Add irreproducible discovery rate (IDR) for identifying robust peak sets between replicates. See ENCODE pipeline
-		* Add deduplication by default. Likely via Picard prior to peak calling. (rn macs does this)
+		* Add deduplication as option for ChIPseq analysis.
 		* enable more efficient handling of experimental designs where the same input is used for multiple pull-down/antibody samples. e.g. ChIRPseq.
+		* Possibly replace seacr with MACS2 as default in CUT&RUN/CUT&TAG. seacr doesn't seem supported and documentation is poor. I also identified some issues with their code that I had to fix. That fix is present in the seacr version installed in the conda env I use. 
 	* Simplify cat_rename.py to take sample prefixes (text upstream of the lane number '_L00X') supplied via samples_info.tab.
 	* Add parameter to specify output directory name. Right now its given the pipeline name.
 	* Add salmon pipeline for RNAseq

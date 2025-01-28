@@ -13,6 +13,12 @@ There are currently 4 RNA-seq analysis pipelines available
 	4.	RNAseq_HISAT2_stringtie_nvltrx
 			paired-end data fastqc > fastp > HISAT2 > stringtie novel transcript identification
 
+## small RNA-seq
+There is currently 1 small RNA-seq analysis pipeline available
+
+	1.	sRNAseq_SE
+			single-end data fastqc > umi-tools > STAR > featurecounts
+
 ## DNA Binding/enrichment 
 There are currently 3 analysis pipelines available
 
@@ -48,7 +54,7 @@ This file contains required general and workflow specific configuaration info.
 		sample_file: Where to locate the samples_info.tab file (default config/samples_info.tab)
 		workflow: name of workflow being used
 		genome: location of indexed genome. 
-			1. For RNAseq_PE or RNAseq_SE - star 2.7.7a index
+			1. For RNAseq_PE, RNAseq_SE, or sRNAseq_SE - star 2.7.7a index
 			2. For HISAT2 workflows - HISAT2 index
 			3. For ChIPseq/CUT-RUN/ATACseq - bowtie2 index
 		GTF: location of .gtf file
@@ -92,7 +98,7 @@ This script sets some environment variable and loads the conda environment.
 This file computes the fraction of reads in peaks (FRP) and outputs a table with FRP, total fragments, and fragments within peaks.
 
 ## workflow/envs/CVRCseq.yml
-This file contains the conda environment info used by this pipeline.
+This file contains the info for the conda environment used by this pipeline.
  
 ## Usage
 	

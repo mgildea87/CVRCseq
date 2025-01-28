@@ -162,6 +162,6 @@ if sys.argv[2] == 'CUT-RUN_PE' or sys.argv[2] == 'ChIPseq_PE':
 	rename_ChIP(sample_table, concat_file_names)
 if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie_nvltrx' or sys.argv[2] == 'ATACseq_PE':
 	rename_RNA_PE(sample_table, concat_file_names)
-if sys.argv[2] == 'RNAseq_SE':
+if sys.argv[2] == 'RNAseq_SE' or sys.argv[2] == 'sRNAseq_SE':
 	rename_RNA_SE(sample_table, concat_file_names)
 

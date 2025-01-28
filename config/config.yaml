@@ -1,6 +1,6 @@
 workflow: ""
 sample_file: "config/samples_info.tab"
-genome: """
+genome: ""
 spike_genome: ""
 GTF: ""
 chromosome_lengths: ""

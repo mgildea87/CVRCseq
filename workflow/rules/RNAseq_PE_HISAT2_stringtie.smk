@@ -52,11 +52,11 @@ rule trim:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz',
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
-	threads: 20
+	threads: 16
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	resources: 
-		time_min=240, mem_mb=10000, cpus=20
+		time_min=240, mem_mb=20000, cpus=16
 	params:
 		'--detect_adapter_for_pe'
 	shell:
@@ -68,11 +68,11 @@ rule align:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz'
 	output:
 		bam = 'results/alignment/{sample}.bam'
-	threads: 20
+	threads: 16
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	resources: 
-		time_min=240, mem_mb=60000, cpus=20
+		time_min=240, mem_mb=60000, cpus=16
 	params:
 		'--phred33 --rna-strandness RF --dta'
 	shell:
@@ -84,9 +84,9 @@ rule count:
 	output:
 		trans_counts = 'results/stringtie/{sample}/{sample}.gtf',
 		gene_counts = 'results/stringtie/{sample}/{sample}.tab'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=20
+		time_min=240, mem_mb=40000, cpus=16
 	params:
 		'--rf -e -B'
 	shell:

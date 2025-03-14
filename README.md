@@ -14,7 +14,7 @@ There are currently 4 RNA-seq analysis pipelines available
 			paired-end data fastqc > fastp > HISAT2 > stringtie novel transcript identification
 
 ## small RNA-seq
-There is currently 1 small RNA-seq analysis pipeline available
+There is currently 1 small RNA-seq analysis pipeline available. This is designed to work with QIAseq miRNA Library Kit from Qiagen.
 
 	1.	sRNAseq_SE
 			single-end data fastqc > umi-tools > STAR > featurecounts
@@ -113,7 +113,7 @@ This file contains the info for the conda environment used by this pipeline.
 				-d	.fastq directory"
 				-s	parameters to pass to snakemake (e.g. --unlock)
 				-w	workflow name (e.g. 'RNAseq_PE')
-				-c  Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to local directory
+				-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to local directory
 
 # To-do
 

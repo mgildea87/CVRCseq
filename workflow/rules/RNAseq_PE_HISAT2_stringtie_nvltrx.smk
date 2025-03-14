@@ -52,9 +52,9 @@ rule trim:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz',
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=10000, cpus=20
+		time_min=240, mem_mb=20000, cpus=16
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -68,9 +68,9 @@ rule align:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz'
 	output:
 		bam = 'results/alignment/{sample}.bam'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=20
+		time_min=240, mem_mb=60000, cpus=16
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -84,9 +84,9 @@ rule count:
 	output:
 		trans_counts = 'results/stringtie/{sample}.gtf',
 		gene_counts = 'results/stringtie/{sample}.tab'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=20
+		time_min=240, mem_mb=40000, cpus=16
 	params:
 		'--rf --conservative'
 	shell:
@@ -105,9 +105,9 @@ rule merge:
 		gtf_list = 'results/stringtie/merged.txt'
 	output:
 		merged_gtf = 'results/stringtie/merged.gtf'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=20
+		time_min=240, mem_mb=40000, cpus=16
 	shell:
 		'stringtie --merge -p {threads} -G %s -o {output.merged_gtf} {input.gtf_list}' % (GTF)
 
@@ -117,9 +117,9 @@ rule count_2:
 		merged_gtf = 'results/stringtie/merged.gtf'
 	output:
 		trans_counts = 'results/stringtie/merged/{sample}/{sample}_merged.gtf'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=20
+		time_min=240, mem_mb=40000, cpus=16
 	params:
 		'--rf -e -B'
 	shell:

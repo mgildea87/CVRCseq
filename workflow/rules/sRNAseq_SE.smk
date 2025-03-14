@@ -66,9 +66,9 @@ rule align:
 		R1='results/umi_tools_trim/{sample}_trimmed_R1.fastq.gz'
 	output:
 		bam = 'results/alignment/{sample}.bam'
-	threads: 10
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=20
+		time_min=240, mem_mb=60000, cpus=16
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignEndsType EndToEnd --outFilterMismatchNmax 1'
 		'--outFilterMultimapScoreRange 0 --outFilterMultimapNmax 10 --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0'
@@ -80,9 +80,9 @@ rule count:
 		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
 	output:
 		counts = 'results/feature_counts/count_table.txt'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=480, mem_mb=30000, cpus=20
+		time_min=480, mem_mb=30000, cpus=16
 	params:
 		'-g gene_id -s 1 -Q 5 -F GTF --extraAttributes gene_type,gene_name'
 	shell:

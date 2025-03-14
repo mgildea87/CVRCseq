@@ -71,9 +71,9 @@ rule trim:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz',
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=10000, cpus=20
+		time_min=240, mem_mb=20000, cpus=16
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -87,9 +87,9 @@ rule align:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz'
 	output:
 		'results/alignment/{sample}.bam'
-	threads: 30
+	threads: 16
 	resources: 
-		time_min=360, mem_mb=60000, cpus=30
+		time_min=360, mem_mb=60000, cpus=16
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -112,9 +112,9 @@ rule dedup_bam:
 		bam='results/alignment/{sample}.bam'
 	output:
 		'results/alignment/{sample}_dedup.bam'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=120, mem_mb=30000, cpus=20	
+		time_min=120, mem_mb=30000, cpus=16
 	shell:
 		'samtools collate {input} -O -@ {threads} | samtools fixmate -m -@ {threads} - - | samtools sort -@ {threads} | samtools markdup - ATACseq_PE/results/alignment/{wildcards.sample}_dedup.bam -@ {threads} -rsS'
 
@@ -138,7 +138,7 @@ rule index:
 		'results/alignment/{sample}.bam.bai'	
 	threads: 20
 	resources: 
-		time_min=240, mem_mb=30000, cpus=20
+		time_min=240, mem_mb=30000, cpus=16
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
 

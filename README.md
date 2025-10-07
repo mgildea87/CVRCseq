@@ -25,7 +25,7 @@ There are currently 3 analysis pipelines available
 	1.	ChIPseq_PE
 			paired-end data fastqc > fastp > bowtie2 > macs2
 	2.	CUT-RUN_PE
-			paired-end data fastqc > fastp > bowtie2 > seacr
+			paired-end data fastqc > fastp > bowtie2 > seacr & macs2
 	3.	ATACseq_PE
 			paired-end data fastqc > fastp > bowtie2 > macs2
 
@@ -61,6 +61,7 @@ This file contains required general and workflow specific configuaration info.
 	CUT-RUN_PE
 		spike_genome: Location of spike-in genome index. This is only implemented in CUT-RUN. bowtie2 index
 		chromosome_lengths: location of chromosome lengths file. required for spike-in normalization in CUT-RUN
+		effective_genome_size: Effective genome size for MACS2
 	ChIPseq_PE
 		effective_genome_size: Effective genome size for MACS2
 	ATACseq_PE
@@ -118,12 +119,14 @@ This file contains the info for the conda environment used by this pipeline.
 # To-do
 
 	* Add testing data and tests
+	* Add better error reporting. It's difficult sometimes to ID why the pipeline has failed.
 	* Enrichment pipelines
+		* Add parameter for specification of MACS2 narrow vs broad. Add to config file. Would need to edit snakefiles and FRP script
 		* Add irreproducible discovery rate (IDR) for identifying robust peak sets between replicates. See ENCODE pipeline
 		* Add deduplication as option for ChIPseq analysis.
 		* enable more efficient handling of experimental designs where the same input is used for multiple pull-down/antibody samples. e.g. ChIRPseq.
-		* Possibly replace seacr with MACS2 as default in CUT&RUN/CUT&TAG. seacr doesn't seem supported and documentation is poor. I also identified some issues with their code that I had to fix. That fix is present in the seacr version installed in the conda env I use. 
-	* Simplify cat_rename.py to take sample prefixes (text upstream of the lane number '_L00X') supplied via samples_info.tab.
+		* Incorporate spike-in normalization to CUT&RUN macs2 peak calling
+	* Simplify cat_rename.py to take sample prefixes (text upstream of the lane number '_L00X') supplied via samples_info.tab. see: https://github.com/macs3-project/MACS/issues/356
 	* Add parameter to specify output directory name. Right now its given the pipeline name.
 	* Add salmon pipeline for RNAseq
 	* Add rules to snakefiles containing R scripts for some downstream QC and plotting. e.g. for RNAseq: PCA, replicate scatter plots, count statistics or for ATACseq: fragment length distributions, FRP plots, replicate comparisons. 

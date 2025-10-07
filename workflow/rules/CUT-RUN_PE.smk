@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks']:
+for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/MACS2', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks', 'CUT-RUN_PE/results/peaks/seacr', 'CUT-RUN_PE/results/peaks/MACS2']:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 
@@ -9,6 +9,7 @@ sample_file = config["sample_file"]
 genome = config["genome"]
 spike_genome = config["spike_genome"]
 chr_lens = config["chromosome_lengths"]
+effective_genome_size = config["effective_genome_size"]
 
 table = pd.read_table(sample_file)
 sample = table['Sample']
@@ -34,8 +35,10 @@ rule all:
 	input:
 		expand('results/fastqc/{sample_file}{read}_fastqc.html', sample_file = sample_ids_file, read = read),
 		expand('results/fastqc_post_trim/{sample_file}_trimmed{read}_fastqc.html', sample_file = sample_ids_file, read = read),
-		expand('results/peaks/{sample}.stringent.bed', sample = sample_ids),
-		'results/FRP.txt',
+		expand('results/peaks/seacr/{sample}.stringent.bed', sample = sample_ids),
+		'results/FRP_seacr.txt',
+		expand('results/peaks/MACS2/{sample}_peaks.broadPeak', sample = sample_ids),
+		'results/FRP_MACS2.txt',
 		expand('results/alignment/frag_len/{sample}.txt', sample = sample_ids_file),
 		expand('results/alignment/{sample}_sorted.bam.bai', sample = sample_ids_file),
 		expand('results/alignment/{sample}_sorted.bam', sample = sample_ids_file)
@@ -156,11 +159,28 @@ rule SEACR:
 		exp='results/alignment/bed/{sample}_Antibody.bedgraph',
 		con='results/alignment/bed/{sample}_Control.bedgraph'
 	output:
-		'results/peaks/{sample}.stringent.bed'
+		'results/peaks/seacr/{sample}.stringent.bed'
+	resources: 
+		time_min=120, mem_mb=40000
 	params:
 		'non stringent'
 	shell:
-		'bash SEACR_1.3.sh {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/{wildcards.sample}'
+		'bash SEACR_1.3.sh {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/seacr/{wildcards.sample}'
+
+rule MACS2:
+	input:
+		exp='results/alignment/{sample}_Antibody.bam',
+		con='results/alignment/{sample}_Control.bam'
+	output:
+		'results/peaks/MACS2/{sample}_peaks.broadPeak'
+	resources: 
+		time_min=120, mem_mb=40000
+	log:
+		'results/logs/MACS2/{sample}.log'
+	params:
+		'-B --outdir CUT-RUN_PE/results/peaks/MACS2/ -g %s -q 0.05 -f BAMPE --broad' % (effective_genome_size)
+	shell:
+		'macs2 callpeak -t {input.exp} -c {input.con} {params} -n {wildcards.sample} 2> {log}'
 
 rule fragment_size:
 	input:
@@ -172,11 +192,27 @@ rule fragment_size:
 		samtools view {input} | awk -F'\t' 'function abs(x){{return ((x < 0.0) ? -x : x)}} {{print abs($9)}}' | sort | uniq -c | awk -v OFS="\t" '{{print $2, $1/2}}' > {output}
 		"""
 
-rule FRP:
+rule FRP_seacr:
 	input:
-		expand('results/peaks/{sample}.stringent.bed', sample = sample_ids)
+		expand('results/peaks/seacr/{sample}.stringent.bed', sample = sample_ids)
 	output:
-		'results/FRP.txt'
+		'results/FRP_seacr.txt'
+	resources: 
+		time_min=300, mem_mb=40000
+	params:
+		peak_caller='seacr'
+	script:
+		'../scripts/FRP.py'
+
+rule FRP_MACS2:
+	input:
+		expand('results/peaks/MACS2/{sample}_peaks.broadPeak', sample = sample_ids)
+	output:
+		'results/FRP_MACS2.txt'
+	resources: 
+		time_min=300, mem_mb=40000
+	params:
+		peak_caller='MACS2'
 	script:
 		'../scripts/FRP.py'
 

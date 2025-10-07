@@ -54,6 +54,8 @@ fi
 
 # load conda environment
 source workflow/scripts/condaload_CVRCseq.sh
+# output conda info 
+conda list > conda_env.txt
 mkdir -p "$workflow"/inputs/fastq
 mkdir slurm_logs
 

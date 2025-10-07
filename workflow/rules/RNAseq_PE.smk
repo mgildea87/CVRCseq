@@ -85,6 +85,7 @@ rule align:
 		'--outFilterIntronMotifs RemoveNoncanonicalUnannotated --scoreGapNoncan -14 --outSJfilterReads Unique --outFilterMultimapNmax 10'
 	shell:
 		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseq_PE/results/alignment/{wildcards.sample}_ | samtools view -bh > RNAseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
+
 rule count:
 	input:
 		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)

@@ -22,6 +22,7 @@ Help()
    echo "                             'RNAseq_PE' - paired end reads, fastqc, fastp, STAR, featurecounts"
    echo "                             'RNAseq_PE_HISAT2_stringtie' - paired end reads, fastqc, fastp, HISAT2, stringtie"
    echo "                             'RNAseq_PE_HISAT2_stringtie_nvltrx' - paired end reads, fastqc, fastp, HISAT2, stringtie (novel transcript assembly)"
+   echo "                             'RNAseqTE_PE' - paired end reads, fastqc, fastp, STAR, TEcount"
    echo "                             'sRNAseq_SE' - single end reads, fastqc, umi-tools, STAR, featurecounts"
    echo "                             'ChIPseq_PE' - paired end reads, fastqc, fastp, bowtie2, macs2"
    echo "                             'CUT-RUN_PE' - paired end reads, fastqc, fastp, bowtie2, seacr"
@@ -43,7 +44,7 @@ while getopts ":w:s:c:d:h" arg; do
 done
 
 #Check if workflow (-w) exists in available workflows. If not, exit.
-workflow_options=( "RNAseq_SE" "sRNAseq_SE" "RNAseq_PE" "RNAseq_PE_HISAT2_stringtie" "RNAseq_PE_HISAT2_stringtie_nvltrx" "ChIPseq_PE" "CUT-RUN_PE" "ATACseq_PE" )
+workflow_options=( "RNAseq_SE" "sRNAseq_SE" "RNAseq_PE" "RNAseq_PE_HISAT2_stringtie" "RNAseq_PE_HISAT2_stringtie_nvltrx" "ChIPseq_PE" "CUT-RUN_PE" "ATACseq_PE" "RNAseqTE_PE" )
 
 if printf '%s\n' "${workflow_options[@]}" | grep -Fxq -- $workflow; then
     echo $workflow
@@ -84,6 +85,6 @@ else
   #launch snakemake
   snakemake $snakemake_arg --profile config/profile --config workflow=$workflow
   snakemake --report workflow/snake_make_report.html
-  multiqc . --force
+  multiqc . --force --interactive
 fi
 

@@ -2,7 +2,7 @@
 This is a collection of commonly used pipelines integrated into a single workflow via snakemake. Previously, I had all of these as individual snakemake workflows. This workflow is designed to run on NYU's UltraViolet HPC, which utilizes Slurm and has a variety of different node types.
 
 ## RNA-seq
-There are currently 4 RNA-seq analysis pipelines available
+There are currently 5 RNA-seq analysis pipelines available
 
 	1.	RNAseq_PE
 			paired-end data fastqc > fastp > STAR > featurecounts
@@ -12,6 +12,8 @@ There are currently 4 RNA-seq analysis pipelines available
 			paired-end data fastqc > fastp > HISAT2 > stringtie
 	4.	RNAseq_HISAT2_stringtie_nvltrx
 			paired-end data fastqc > fastp > HISAT2 > stringtie novel transcript identification
+	5.	RNAseqTE_PE
+			paired-end data fastqc > fastp > STAR > TEcount
 
 ## small RNA-seq
 There is currently 1 small RNA-seq analysis pipeline available. This is designed to work with QIAseq miRNA Library Kit from Qiagen.
@@ -68,6 +70,8 @@ This file contains required general and workflow specific configuaration info.
 		effective_genome_size: Effective genome size for MACS2
 	RNAseq_HISAT2_stringtie or RNAseq_HISAT2_stringtie_nvltrx
 		prepDE_length: Average fragment length for stringtie prepDE script
+	RNAseqTE_PE
+		TE_GTF: GTF file containing TE annotations. I've downloaded these from the [MGH lab](https://www.mghlab.org/) [here](https://www.dropbox.com/scl/fo/jdpgn6fl8ngd3th3zebap/ACdZkShDC1au-OckIipI5kM/TEtranscripts/TE_GTF?rlkey=41oz6ppggy82uha5i3yo1rnlx&e=1&subfolder_nav_tracking=1&dl=0)
 
 ## config/profile/config.yaml
 This file contains the default slurm resources for each rule
@@ -114,20 +118,36 @@ This file contains the info for the conda environment used by this pipeline.
 				-d	.fastq directory"
 				-s	parameters to pass to snakemake (e.g. --unlock)
 				-w	workflow name (e.g. 'RNAseq_PE')
-				-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to local directory
+				-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory
 
-# To-do
+## Software links
+	
+	[snakemake](https://snakemake.github.io/)
+	[STAR](https://github.com/alexdobin/STAR)
+	[fastqc](https://github.com/s-andrews/FastQC)
+	[fastp](https://github.com/OpenGene/fastp)
+	[subread - featurecounts](https://github.com/ShiLab-Bioinformatics/subread)
+	[HISAT2](https://daehwankimlab.github.io/hisat2/)
+	[stringtie](https://ccb.jhu.edu/software/stringtie/)
+	[TEcount](https://github.com/mhammell-laboratory/TEtranscripts)
+	[umi-tools](https://github.com/CGATOxford/UMI-tools)
+	[bowtie2](https://github.com/BenLangmead/bowtie2)
+	[macs2](https://pypi.org/project/MACS2/)
+	[seacr](https://github.com/FredHutch/SEACR)
 
-	* Add testing data and tests
-	* Add better error reporting. It's difficult sometimes to ID why the pipeline has failed.
-	* Enrichment pipelines
-		* Add parameter for specification of MACS2 narrow vs broad. Add to config file. Would need to edit snakefiles and FRP script
-		* Add irreproducible discovery rate (IDR) for identifying robust peak sets between replicates. See ENCODE pipeline
-		* Add deduplication as option for ChIPseq analysis.
-		* enable more efficient handling of experimental designs where the same input is used for multiple pull-down/antibody samples. e.g. ChIRPseq.
-		* Incorporate spike-in normalization to CUT&RUN macs2 peak calling
-	* Simplify cat_rename.py to take sample prefixes (text upstream of the lane number '_L00X') supplied via samples_info.tab. see: https://github.com/macs3-project/MACS/issues/356
-	* Add parameter to specify output directory name. Right now its given the pipeline name.
-	* Add salmon pipeline for RNAseq
-	* Add rules to snakefiles containing R scripts for some downstream QC and plotting. e.g. for RNAseq: PCA, replicate scatter plots, count statistics or for ATACseq: fragment length distributions, FRP plots, replicate comparisons. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

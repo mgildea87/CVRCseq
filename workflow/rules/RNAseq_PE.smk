@@ -51,7 +51,7 @@ rule trim:
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=10000, cpus=16
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -93,7 +93,7 @@ rule count:
 		counts = 'results/feature_counts/count_table.txt'
 	threads: 16
 	resources: 
-		time_min=480, mem_mb=30000, cpus=16
+		time_min=600, mem_mb=30000, cpus=16
 	params:
 		'-p --countReadPairs -g gene_id -s 2 -Q 5 --extraAttributes gene_type,gene_name'
 	shell:

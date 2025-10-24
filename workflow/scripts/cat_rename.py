@@ -1,14 +1,23 @@
 import os, subprocess, sys, yaml
 import pandas as pd
 
-#get config file sample_file
-with open('config/config.yaml', 'r') as file:
-	config = yaml.safe_load(file)
-sample_file = config['sample_file']
+def main():
+  print('copying and concatenating .fastq files')
+  #get config file sample_file
+  with open('config/config.yaml', 'r') as file:
+  	config = yaml.safe_load(file)
+  sample_file = config['sample_file']
+  sample_table = pd.read_table(sample_file)
+  
+  concat_file_names = concat(sample_table)
+  
+  if sys.argv[2] == 'CUT-RUN_PE' or sys.argv[2] == 'ChIPseq_PE':
+	  rename_ChIP(sample_table, concat_file_names)
+  if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie_nvltrx' or sys.argv[2] == 'ATACseq_PE' or sys.argv[2] == 'RNAseqTE_PE':
+  	rename_RNA_PE(sample_table, concat_file_names)
+  if sys.argv[2] == 'RNAseq_SE' or sys.argv[2] == 'sRNAseq_SE':
+	  rename_RNA_SE(sample_table, concat_file_names)
 
-sample_table = pd.read_table(sample_file)
-
-#Add rule to copy files if 
 
 #re write this to work backwards from sample table. Do not copy files that already exist in the local fastq directory
 #Combine fastq files from multiple lanes
@@ -46,9 +55,7 @@ def rename_RNA_SE(sample_table, concat_file_names):
 	replicate = sample_table['Replicate']
 	condition = sample_table['Condition']
 	File_R1 = sample_table['File_Name_R1']
-
 	files_initial = os.listdir(cur_dir)
-	
 	for i in range(len(File_R1)):
 		if 'L00' in File_R1[i]:
 			file = File_R1[i].split('L00')
@@ -62,7 +69,6 @@ def rename_RNA_SE(sample_table, concat_file_names):
 		elif os.path.exists('%s/%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_R1.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 			sys.exit(1)
-	
 	# Remove unused files
 	for file in concat_file_names:
 		if os.path.exists(file):
@@ -75,9 +81,7 @@ def rename_RNA_PE(sample_table, concat_file_names):
 	condition = sample_table['Condition']
 	File_R1 = sample_table['File_Name_R1']
 	File_R2 = sample_table['File_Name_R2']
-
 	files_initial = os.listdir(cur_dir)
-	
 	for i in range(len(File_R1)):
 		if 'L00' in File_R1[i]:
 			file = File_R1[i].split('L00')
@@ -91,8 +95,6 @@ def rename_RNA_PE(sample_table, concat_file_names):
 		elif os.path.exists('%s/%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_R1.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 			sys.exit(1)
-
-
 	for i in range(len(File_R2)):
 		if 'L00' in File_R2[i]:
 			file = File_R2[i].split('L00')
@@ -106,7 +108,6 @@ def rename_RNA_PE(sample_table, concat_file_names):
 		elif os.path.exists('%s/%s_%s_%s_R2.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_R2.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i]))
 			sys.exit(1)
-
 	# Remove unused files
 	for file in concat_file_names:
 		if os.path.exists(file):
@@ -120,9 +121,7 @@ def rename_ChIP(sample_table, concat_file_names):
 	Antibody = sample_table['Antibody']
 	File_R1 = sample_table['File_Name_R1']
 	File_R2 = sample_table['File_Name_R2']
-
 	files_initial = os.listdir(cur_dir)
-
 	for i in range(len(File_R1)):
 		if 'L00' in File_R1[i]:
 			file = File_R1[i].split('L00')
@@ -136,7 +135,6 @@ def rename_ChIP(sample_table, concat_file_names):
 		elif os.path.exists('%s/%s_%s_%s_%s_R1.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i], Antibody[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_%s_R1.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
 			sys.exit(1)
-
 	for i in range(len(File_R2)):
 		if 'L00' in File_R2[i]:
 			file = File_R2[i].split('L00')
@@ -150,18 +148,10 @@ def rename_ChIP(sample_table, concat_file_names):
 		elif os.path.exists('%s/%s_%s_%s_%s_R2.fastq.gz' % (cur_dir,sample[i],condition[i],replicate[i], Antibody[i])) == False:
 			print('%s/%s or %s/%s_%s_%s_%s_R2.fastq.gz do not exist!' % (cur_dir,file,cur_dir,sample[i],condition[i],replicate[i], Antibody[i]))
 			sys.exit(1)
-
 	# Remove unused files
 	for file in concat_file_names:
 		if os.path.exists(file):
 			os.system('rm %s' % (file))
 
-concat_file_names = concat(sample_table)
-
-if sys.argv[2] == 'CUT-RUN_PE' or sys.argv[2] == 'ChIPseq_PE':
-	rename_ChIP(sample_table, concat_file_names)
-if sys.argv[2] == 'RNAseq_PE' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie' or sys.argv[2] == 'RNAseq_PE_HISAT2_stringtie_nvltrx' or sys.argv[2] == 'ATACseq_PE':
-	rename_RNA_PE(sample_table, concat_file_names)
-if sys.argv[2] == 'RNAseq_SE' or sys.argv[2] == 'sRNAseq_SE':
-	rename_RNA_SE(sample_table, concat_file_names)
-
+if __name__ == "__main__":
+    main()

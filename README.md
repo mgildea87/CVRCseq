@@ -122,17 +122,17 @@ This file contains the info for the conda environment used by this pipeline.
 
 ## Software links
 	
-[snakemake](https://snakemake.github.io/)
-[STAR](https://github.com/alexdobin/STAR)
-[fastqc](https://github.com/s-andrews/FastQC)
-[fastp](https://github.com/OpenGene/fastp)
-[subread - featurecounts](https://github.com/ShiLab-Bioinformatics/subread)
-[HISAT2](https://daehwankimlab.github.io/hisat2/)
-[stringtie](https://ccb.jhu.edu/software/stringtie/)
-[TEcount](https://github.com/mhammell-laboratory/TEtranscripts)
-[umi-tools](https://github.com/CGATOxford/UMI-tools)
-[bowtie2](https://github.com/BenLangmead/bowtie2)
-[macs2](https://pypi.org/project/MACS2/)
+[snakemake](https://snakemake.github.io/), 
+[STAR](https://github.com/alexdobin/STAR), 
+[fastqc](https://github.com/s-andrews/FastQC), 
+[fastp](https://github.com/OpenGene/fastp), 
+[subread - featurecounts](https://github.com/ShiLab-Bioinformatics/subread), 
+[HISAT2](https://daehwankimlab.github.io/hisat2/), 
+[stringtie](https://ccb.jhu.edu/software/stringtie/), 
+[TEcount](https://github.com/mhammell-laboratory/TEtranscripts), 
+[umi-tools](https://github.com/CGATOxford/UMI-tools), 
+[bowtie2](https://github.com/BenLangmead/bowtie2), 
+[macs2](https://pypi.org/project/MACS2/), 
 [seacr](https://github.com/FredHutch/SEACR)
 
 

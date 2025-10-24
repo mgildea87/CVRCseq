@@ -26,7 +26,7 @@ Currently, there are **5 RNA-seq analysis pipelines** available:
 
 ---
 
-### 🔬🧬 **Small RNA-seq Analysis**
+### 🧬 **Small RNA-seq Analysis**
 Currently, there is **1 small RNA-seq analysis pipeline** available, designed to work with the **QIAseq miRNA Library Kit** from Qiagen:
 
 1. **sRNAseq_SE**  
@@ -114,22 +114,22 @@ Defines default **Slurm resources** for each rule.
 ### 📝 **Scripts**
 
 #### **`workflow/scripts/cat_rename.py`**
-Preprocessing script that:
-1. Concatenates fastq files split across multiple sequencing lanes
-2. Renames fastq files from verbose sequencing center IDs to user-defined names
-3. Creates new files as `sample_id_Rx.fastq.gz`
-4. Executed automatically via `snakemake_init.sh`
+Preprocessing script that:\
+1. Concatenates fastq files split across multiple sequencing lanes\
+2. Renames fastq files from verbose sequencing center IDs to user-defined names\
+3. Creates new files as `sample_id_Rx.fastq.gz`\
+4. Executed automatically via `snakemake_init.sh`\
 
 > **Skip option:** Use `-c` flag with `snakemake_init.sh` to bypass this step.
 
 ---
 
 #### **`workflow/scripts/snakemake_init.sh`**
-Main execution script that:
-1. Executes `cat_rename.py`
-2. Loads conda environment
-3. Launches Snakemake pipeline
-4. Runs MultiQC for quality control
+Main execution script that:\
+1. Executes `cat_rename.py`\
+2. Loads conda environment\
+3. Launches Snakemake pipeline\
+4. Runs MultiQC for quality control\
 
 ---
 
@@ -144,10 +144,10 @@ Sets environment variables and loads the conda environment.
 ---
 
 #### **`workflow/scripts/FRP.py`**
-Computes **Fraction of Reads in Peaks (FRP)** and outputs a summary table with:
-- FRP values
-- Total fragments
-- Fragments within peaks
+Computes **Fraction of Reads in Peaks (FRP)** and outputs a summary table with:\
+- FRP values\
+- Total fragments\
+- Fragments within peaks\
 
 ---
 
@@ -164,23 +164,28 @@ Contains conda environment specifications for the pipeline.
 
 ## **🚀 Usage Instructions**
 
-### **Getting Started:**
-1. **Clone repository:**
-	git clone https://github.com/mgildea87/CVRCseq.git
-2. **Update sample information**
-	Edit config/samples_info.tab with fastq.gz file names and desired sample, condition, replicate names, and Antibody/IgG control status (if using)
-3. **Configure workflow**
-	Update config.yaml with project-specific settings
-4. **Customize parameters (optional)** 
-	Set workflow specific parameters in the appropriate worklow/rules .smk file if desired. e.g. alignment parameters. 
-5. **Launch pipeline**
-	bash workflow/scripts/snakemake_init.sh
-		Description of parameters:
-			-h	help"
-			-d	.fastq directory"
-			-s	parameters to pass to snakemake (e.g. --unlock)
-			-w	workflow name (e.g. 'RNAseq_PE')
-			-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory
+### **Getting Started**
+
+1. **Clone repository**\
+  git clone https://github.com/mgildea87/CVRCseq.git
+
+2. **Update sample information**\
+  Edit config/samples_info.tab with fastq.gz file names and desired sample, condition, replicate names, and Antibody/IgG control status (if using)
+
+3. **Configure workflow**\
+  Update config.yaml with project-specific settings
+
+4. **Customize parameters (optional)**\
+  Set workflow specific parameters in the appropriate worklow/rules .smk file if desired. e.g. alignment parameters. 
+
+5. **Launch pipeline**\
+   bash workflow/scripts/snakemake_init.sh
+   Description of parameters:\
+			-h	help"\
+			-d	.fastq directory"\
+			-s	parameters to pass to snakemake (e.g. --unlock)\
+			-w	workflow name (e.g. 'RNAseq_PE')\
+			-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory\
 
 ## Software links
 

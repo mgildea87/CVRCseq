@@ -43,7 +43,8 @@ rule fastqc:
 	input: 
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc/{sample}{read}_fastqc.html",
+		"results/fastqc/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'ChIPseq_PE/results/fastqc/'
 	shell: 
@@ -53,7 +54,8 @@ rule fastqc_post_trim:
 	input: 
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
+		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'ChIPseq_PE/results/fastqc_post_trim/'
 	shell: 
@@ -70,7 +72,7 @@ rule trim:
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -86,7 +88,7 @@ rule align:
 		'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=16
+		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -101,7 +103,7 @@ rule sort:
 		'results/alignment/{sample}_sorted.bam'	
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	shell:
 		'samtools sort -@ {threads} {input} > {output}'
 
@@ -112,7 +114,7 @@ rule index:
 		'results/alignment/{sample}_sorted.bam.bai'	
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	shell:
 		'samtools index -@ {threads} {input} > {output}'		
 
@@ -122,6 +124,7 @@ rule MACS2:
   		con='results/alignment/{sample}_Control.bam'
   	output:
   		'results/peaks/{sample}_peaks.narrowPeak'
+  	threads: 1
   	log:
   		'results/logs/MACS2/{sample}.log'
   	params:
@@ -134,6 +137,7 @@ rule fragment_size:
  		'results/alignment/{sample}.bam'
  	output:
  		'results/alignment/frag_len/{sample}.txt'
+ 	threads: 1
  	shell:
  		"""
  		samtools view {input} | awk -F'\t' 'function abs(x){{return ((x < 0.0) ? -x : x)}} {{print abs($9)}}' | sort | uniq -c | awk -v OFS="\t" '{{print $2, $1/2}}' > {output}
@@ -144,5 +148,6 @@ rule FRP:
  		expand('results/peaks/{sample}_peaks.narrowPeak', sample = sample_ids)
  	output:
  		'results/FRP.txt'
+ 	threads: 1
  	script:
  		'../scripts/FRP.py'

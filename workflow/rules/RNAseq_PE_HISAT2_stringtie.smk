@@ -38,6 +38,7 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
+	threads: 1
 	params:
 		'RNAseq_PE_HISAT2_stringtie/results/fastqc/'
 	shell: 
@@ -56,7 +57,7 @@ rule trim:
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	params:
 		'--detect_adapter_for_pe'
 	shell:
@@ -72,7 +73,7 @@ rule align:
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	resources: 
-		time_min=240, mem_mb=60000, cpus=16
+		time_min=240, mem_mb=60000
 	params:
 		'--phred33 --rna-strandness RF --dta'
 	shell:
@@ -86,7 +87,7 @@ rule count:
 		gene_counts = 'results/stringtie/{sample}/{sample}.tab'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=16
+		time_min=240, mem_mb=40000
 	params:
 		'--rf -e -B'
 	shell:
@@ -99,6 +100,7 @@ rule deseq_prep:
 	output:
 		gene_counts = 'results/stringtie/gene_count_matrix.csv',
 		transcript_counts = 'results/stringtie/transcript_count_matrix.csv'
+	threads: 1
 	shell:
 		'prepDE.py -l %s -i {input.str_dir} -g {output.gene_counts} -t {output.transcript_counts}' % (prepDE_length)
 

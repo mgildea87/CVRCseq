@@ -34,6 +34,7 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
+	threads: 1
 	params:
 		'RNAseq_SE/results/fastqc/'
 	shell: 
@@ -48,7 +49,7 @@ rule trim:
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	shell:
@@ -58,7 +59,8 @@ rule fastqc_post_trim:
 	input: 
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
+		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'RNAseq_SE/results/fastqc_post_trim/'
 	shell: 
@@ -71,7 +73,7 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=16
+		time_min=240, mem_mb=60000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignMatesGapMax 1000000 --outFilterMismatchNmax 999 --alignIntronMax 1000000 ' 
 		'--alignSplicedMateMapLmin 3 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNoverReadLmax 0.04 --outSAMattributes All --alignIntronMin 20 '
@@ -85,7 +87,7 @@ rule count:
 		counts = 'results/feature_counts/count_table.txt'
 	threads: 16
 	resources: 
-		time_min=480, mem_mb=30000, cpus=16
+		time_min=480, mem_mb=30000
 	params:
 		'-g gene_id -s 2 -Q 5 --extraAttributes gene_type,gene_name'
 	shell:

@@ -47,7 +47,8 @@ rule fastqc:
 	input: 
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc/{sample}{read}_fastqc.html",
+		"results/fastqc/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'CUT-RUN_PE/results/fastqc/'
 	shell: 
@@ -57,7 +58,8 @@ rule fastqc_post_trim:
 	input: 
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
+		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'CUT-RUN_PE/results/fastqc_post_trim/'
 	shell: 
@@ -72,9 +74,9 @@ rule trim:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz',
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=10000, cpus=20
+		time_min=240, mem_mb=10000
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -88,9 +90,9 @@ rule align:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz'
 	output:
 		'results/alignment/{sample}.bam'
-	threads: 30
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=30
+		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -104,9 +106,9 @@ rule align_spike:
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz'
 	output:
 		'results/alignment/{sample}_ecoli.bam'
-	threads: 30
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=30
+		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}_ecoli.log'
 	params:
@@ -119,9 +121,9 @@ rule sort:
 		'results/alignment/{sample}.bam'
 	output:
 		'results/alignment/{sample}_sorted.bam'	
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=20
+		time_min=240, mem_mb=20000
 	shell:
 		'samtools sort -@ {threads} {input} > {output}'
 
@@ -130,9 +132,9 @@ rule index:
 		'results/alignment/{sample}_sorted.bam'
 	output:
 		'results/alignment/{sample}_sorted.bam.bai'	
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=20
+		time_min=240, mem_mb=20000
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
 
@@ -143,6 +145,7 @@ rule spike_in_norm:
 	output:
 		'results/alignment/bed/{sample}.bed',
 		'results/alignment/bed/{sample}.bedgraph'
+	threads: 1
 	shell:
 		"""
 		depth=`samtools view CUT-RUN_PE/results/alignment/{wildcards.sample}_ecoli.bam | wc -l`
@@ -160,6 +163,7 @@ rule SEACR:
 		con='results/alignment/bed/{sample}_Control.bedgraph'
 	output:
 		'results/peaks/seacr/{sample}.stringent.bed'
+	threads: 1
 	resources: 
 		time_min=120, mem_mb=40000
 	params:
@@ -173,6 +177,7 @@ rule MACS2:
 		con='results/alignment/{sample}_Control.bam'
 	output:
 		'results/peaks/MACS2/{sample}_peaks.broadPeak'
+	threads: 1
 	resources: 
 		time_min=120, mem_mb=40000
 	log:
@@ -187,6 +192,7 @@ rule fragment_size:
 		'results/alignment/{sample}.bam'
 	output:
 		'results/alignment/frag_len/{sample}.txt'
+	threads: 1
 	shell:
 		"""
 		samtools view {input} | awk -F'\t' 'function abs(x){{return ((x < 0.0) ? -x : x)}} {{print abs($9)}}' | sort | uniq -c | awk -v OFS="\t" '{{print $2, $1/2}}' > {output}
@@ -197,6 +203,7 @@ rule FRP_seacr:
 		expand('results/peaks/seacr/{sample}.stringent.bed', sample = sample_ids)
 	output:
 		'results/FRP_seacr.txt'
+	threads: 1
 	resources: 
 		time_min=300, mem_mb=40000
 	params:
@@ -209,6 +216,7 @@ rule FRP_MACS2:
 		expand('results/peaks/MACS2/{sample}_peaks.broadPeak', sample = sample_ids)
 	output:
 		'results/FRP_MACS2.txt'
+	threads: 1
 	resources: 
 		time_min=300, mem_mb=40000
 	params:

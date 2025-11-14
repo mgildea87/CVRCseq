@@ -74,7 +74,7 @@ done
 
 if [[ $skip_cat_rename = "skip" ]] ; then
   #launch snakemake without running cat_rename.py first
-  snakemake $snakemake_arg --profile config/profile --config workflow=$workflow
+  snakemake $snakemake_arg --profile config/profile --config workflow=$workflow $snakemake_arg
   snakemake --report workflow/snake_make_report.html
   multiqc . --force
 else
@@ -83,7 +83,7 @@ else
     exit
   fi
   #launch snakemake
-  snakemake $snakemake_arg --profile config/profile --config workflow=$workflow
+  snakemake $snakemake_arg --profile config/profile --config workflow=$workflow $snakemake_arg
   snakemake --report workflow/snake_make_report.html
   multiqc . --force --interactive
 fi

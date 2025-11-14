@@ -34,6 +34,7 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
+	threads: 1
 	params:
 		'sRNAseq_SE/results/fastqc/'
 	shell: 
@@ -44,8 +45,9 @@ rule umi_tools_trim:
 		R1='inputs/fastq/{sample}_R1.fastq.gz'
 	output:
 		R1='results/umi_tools_trim/{sample}_trimmed_R1.fastq.gz'
+	threads: 1
 	resources: 
-		time_min=120, mem_mb=10000, cpus=1
+		time_min=120, mem_mb=10000
 	log:
 		'results/logs/umi_tools_trim_reports/{sample}.log'
 	shell:
@@ -55,7 +57,8 @@ rule fastqc_post_trim:
 	input: 
 		fastq = "results/umi_tools_trim/{sample}{read}.fastq.gz"
 	output:  
-		"results/fastqc_post_trim/{sample}{read}_fastqc.html",
+		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'sRNAseq_SE/results/fastqc_post_trim/'
 	shell: 
@@ -68,13 +71,14 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=16
+		time_min=240, mem_mb=60000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignEndsType EndToEnd --outFilterMismatchNmax 1'
 		'--outFilterMultimapScoreRange 0 --outFilterMultimapNmax 10 --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0'
 		'--outFilterMatchNmin 16 --alignSJDBoverhangMin 1000 --alignIntronMax 1'
 	shell:
 		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix sRNAseq_SE/results/alignment/{wildcards.sample}_ | samtools view -bh > sRNAseq_SE/results/alignment/{wildcards.sample}.bam' % (genome)
+		
 rule count:
 	input:
 		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
@@ -82,7 +86,7 @@ rule count:
 		counts = 'results/feature_counts/count_table.txt'
 	threads: 16
 	resources: 
-		time_min=480, mem_mb=30000, cpus=16
+		time_min=480, mem_mb=30000
 	params:
 		'-g gene_id -s 1 -Q 5 -F GTF --extraAttributes gene_type,gene_name'
 	shell:

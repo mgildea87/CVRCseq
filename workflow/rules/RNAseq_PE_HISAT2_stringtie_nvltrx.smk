@@ -38,6 +38,7 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
+	threads: 1
 	params:
 		'RNAseq_PE_HISAT2_stringtie_nvltrx/results/fastqc/'
 	shell: 
@@ -54,7 +55,7 @@ rule trim:
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -70,7 +71,7 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000, cpus=16
+		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -86,7 +87,7 @@ rule count:
 		gene_counts = 'results/stringtie/{sample}.tab'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=16
+		time_min=240, mem_mb=40000
 	params:
 		'--rf --conservative'
 	shell:
@@ -97,6 +98,7 @@ rule combine_gtf:
 		trans_counts = expand('results/stringtie/{sample}.gtf' , sample = sample_ids)
 	output:
 		gtf_list = 'results/stringtie/merged.txt'
+	threads: 1
 	shell:
 		'ls RNAseq_PE_HISAT2_stringtie_nvltrx/results/stringtie/*.gtf > {output.gtf_list}'
 
@@ -107,7 +109,7 @@ rule merge:
 		merged_gtf = 'results/stringtie/merged.gtf'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=16
+		time_min=240, mem_mb=40000
 	shell:
 		'stringtie --merge -p {threads} -G %s -o {output.merged_gtf} {input.gtf_list}' % (GTF)
 
@@ -119,7 +121,7 @@ rule count_2:
 		trans_counts = 'results/stringtie/merged/{sample}/{sample}_merged.gtf'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=40000, cpus=16
+		time_min=240, mem_mb=40000
 	params:
 		'--rf -e -B'
 	shell:
@@ -132,5 +134,6 @@ rule deseq_prep:
 	output:
 		gene_counts = 'results/stringtie/merged/gene_count_matrix.csv',
 		transcript_counts = 'results/stringtie/merged/transcript_count_matrix.csv'
+	threads: 1
 	shell:
 		'prepDE.py -l %s -i {input.str_dir} -g {output.gene_counts} -t {output.transcript_counts}' % (prepDE_length)

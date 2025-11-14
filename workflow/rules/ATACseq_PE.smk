@@ -47,6 +47,7 @@ rule fastqc:
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'ATACseq_PE/results/fastqc/'
 	shell: 
@@ -57,6 +58,7 @@ rule fastqc_post_trim:
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
+	threads: 1
 	params:
 		'ATACseq_PE/results/fastqc_post_trim/'
 	shell: 
@@ -73,7 +75,7 @@ rule trim:
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=20000, cpus=16
+		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -89,7 +91,7 @@ rule align:
 		'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=360, mem_mb=60000, cpus=16
+		time_min=360, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
 	params:
@@ -102,8 +104,9 @@ rule idxstat:
 		bam='results/alignment/{sample}.bam'
 	output:
 		idx='results/alignment/idxstat/{sample}_idxstat.tab'
+	threads: 1
 	resources: 
-		time_min=10, mem_mb=5000, cpus=1		
+		time_min=10, mem_mb=5000		
 	shell:
 		'samtools idxstat {input.bam} > {output.idx}'
 
@@ -114,7 +117,7 @@ rule dedup_bam:
 		'results/alignment/{sample}_dedup.bam'
 	threads: 16
 	resources: 
-		time_min=120, mem_mb=30000, cpus=16
+		time_min=120, mem_mb=30000
 	shell:
 		'samtools collate {input} -O -@ {threads} | samtools fixmate -m -@ {threads} - - | samtools sort -@ {threads} | samtools markdup - ATACseq_PE/results/alignment/{wildcards.sample}_dedup.bam -@ {threads} -rsS'
 
@@ -124,9 +127,9 @@ rule filter_bam:
 		'results/alignment/{sample}.bam'
 	output:
 		'results/alignment/{sample}_filtered_sorted.bam'
-	threads: 8
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=30000, cpus=8
+		time_min=240, mem_mb=30000
 	shell:
 		'samtools view -h {input} | grep -v chrM | samtools view -bh > {output}'
 
@@ -136,9 +139,9 @@ rule index:
 		'results/alignment/{sample}.bam'
 	output:
 		'results/alignment/{sample}.bam.bai'	
-	threads: 20
+	threads: 16
 	resources: 
-		time_min=240, mem_mb=30000, cpus=16
+		time_min=240, mem_mb=30000
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
 
@@ -148,6 +151,7 @@ rule bam2bed:
 		'results/alignment/{sample}_dedup_filtered_sorted.bam'
 	output:
 		'results/alignment/{sample}_dedup_filtered_sorted.bed'
+	threads: 1
 	shell:
 		"""
 		bedtools bamtobed -i {input} | awk -F$'\t' 'BEGIN {{OFS = FS}}{{ if ($6 == "+") {{$2 = $2 + 4}} else if ($6 == "-") {{$3 = $3 - 5}} print $0}}' > {output}
@@ -158,6 +162,7 @@ rule MACS2:
 		exp='results/alignment/{sample}_dedup_filtered_sorted.bed'
 	output:
 		'results/peaks/{sample}_peaks.narrowPeak'
+	threads: 1
 	log:
 		'results/logs/MACS2/{sample}.log'
 	params:
@@ -170,6 +175,7 @@ rule fragment_size:
 		'results/alignment/{sample}_dedup_filtered_sorted.bam'
 	output:
 		'results/alignment/frag_len/{sample}.txt'
+	threads: 1
 	shell:
 		"""
 		samtools view {input} | awk -F'\t' 'function abs(x){{return ((x < 0.0) ? -x : x)}} {{print abs($9)}}' | sort | uniq -c | awk -v OFS="\t" '{{print $2, $1/2}}' > {output}
@@ -180,7 +186,8 @@ rule FRP:
 		expand('results/peaks/{sample}_peaks.narrowPeak', sample = sample_ids)
 	output:
 		'results/FRP.txt'
+	threads: 1
 	resources:
-		time_min=240, mem_mb=30000, cpus=8
+		time_min=240, mem_mb=30000
 	script:
 		'../scripts/FRP.py'

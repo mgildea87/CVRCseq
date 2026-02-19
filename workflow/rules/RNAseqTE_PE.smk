@@ -36,7 +36,8 @@ rule fastqc:
 	output:  
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
-	threads: 1
+	resources: 
+		time_min=300
 	params:
 		'RNAseqTE_PE/results/fastqc/'
 	shell: 
@@ -53,7 +54,7 @@ rule trim:
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=10000
+		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
 	params:
@@ -67,7 +68,8 @@ rule fastqc_post_trim:
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
-	threads: 1
+	resources: 
+		time_min=300
 	params:
 		'RNAseqTE_PE/results/fastqc_post_trim/'
 	shell: 
@@ -81,7 +83,7 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000
+		time_min=660, mem_mb=40000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignMatesGapMax 1000000 --outFilterMismatchNmax 999 --alignIntronMax 1000000 ' 
 		'--alignSplicedMateMapLmin 3 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNoverReadLmax 0.04 --outSAMunmapped Within KeepPairs --outSAMattributes All --alignIntronMin 20 '
@@ -96,7 +98,7 @@ rule index:
 		'results/alignment/{sample}.bam.bai'	
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=30000
+		time_min=45, mem_mb=30000
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
 
@@ -108,9 +110,9 @@ rule TEcount:
 		counts = 'results/TEcount/{sample}.cntTable'
 	threads: 1
 	resources: 
-		time_min=660, mem_mb=40000, partition="cpu_medium"
+		time_min=2000, mem_mb=80000, partition="cpu_medium"
 	params:
-		'--format BAM --mode multi --stranded forward --outdir RNAseqTE_PE/results/TEcount/ --sortByPos'
+		'--format BAM --mode multi --stranded reverse --outdir RNAseqTE_PE/results/TEcount/ --sortByPos'
 	shell:
 		'TEcount {params} -b {input.bam} --GTF %s --TE %s --project {wildcards.sample}' % (GTF, TE_GTF)
 
@@ -119,7 +121,6 @@ rule TEcount_combine:
     expand('results/TEcount/{sample}.cntTable', sample = sample_ids)
   output:
     'results/TEcount/count_table_all.csv'
-  threads: 1
   script:
     '../scripts/combine_TE_counts.py'
 

@@ -1,5 +1,5 @@
 workflow: ""
-sample_file: ""
+sample_file: "config/samples_info.tab"
 genome: ""
 spike_genome: ""
 GTF: ""

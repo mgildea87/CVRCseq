@@ -12,9 +12,6 @@ table = pd.read_table(sample_file)
 sample = table['Sample']
 replicate = table['Replicate']
 condition = table['Condition']
-File_R1 = table['File_Name_R1']
-File_R2 = table['File_Name_R2']
-File_names = File_R1.append(File_R2)
 genome = config["genome"]
 
 sample_ids = []

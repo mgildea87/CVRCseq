@@ -45,8 +45,11 @@ declare -a CONFIGS=(
   "test/config/config_CUT-RUN.yaml"
   "test/config/config_ChIPseq.yaml"
   "test/config/config_RNAseq_PE.yaml"
+  "test/config/config_RNAseq_SE.yaml"
+  "test/config/config_RNAseqTE_PE.yaml"
   "test/config/config_RNAseq_PE_HISAT2_stringtie.yaml"
   "test/config/config_RNAseq_PE_HISAT2_stringtie_nvltrx.yaml"
+  "test/config/config_sRNAseq_SE.yaml"
 )
 
 mkdir -p "${WORK_DIR}"
@@ -114,6 +117,18 @@ prepare_rule_directories() {
       mkdir -p "${run_dir}/${wf_name}/results/logs/trim_reports"
       mkdir -p "${run_dir}/${wf_name}/results/logs/alignment_reports"
       ;;
+    "RNAseq_SE")
+      mkdir -p "${run_dir}/${wf_name}/results/feature_counts"
+      mkdir -p "${run_dir}/${wf_name}/results/fastqc_post_trim"
+      mkdir -p "${run_dir}/${wf_name}/results/logs/trim_reports"
+      mkdir -p "${run_dir}/${wf_name}/results/logs/alignment_reports"
+      ;;
+    "RNAseqTE_PE")
+      mkdir -p "${run_dir}/${wf_name}/results/TEcount"
+      mkdir -p "${run_dir}/${wf_name}/results/fastqc_post_trim"
+      mkdir -p "${run_dir}/${wf_name}/results/logs/trim_reports"
+      mkdir -p "${run_dir}/${wf_name}/results/logs/alignment_reports"
+      ;;
     "RNAseq_PE_HISAT2_stringtie")
       mkdir -p "${run_dir}/${wf_name}/results/stringtie"
       mkdir -p "${run_dir}/${wf_name}/results/logs/trim_reports"
@@ -122,6 +137,13 @@ prepare_rule_directories() {
     "RNAseq_PE_HISAT2_stringtie_nvltrx")
       mkdir -p "${run_dir}/${wf_name}/results/stringtie/merged"
       mkdir -p "${run_dir}/${wf_name}/results/logs/trim_reports"
+      mkdir -p "${run_dir}/${wf_name}/results/logs/alignment_reports"
+      ;;
+    "sRNAseq_SE")
+      mkdir -p "${run_dir}/${wf_name}/results/feature_counts"
+      mkdir -p "${run_dir}/${wf_name}/results/umi_tools_trim"
+      mkdir -p "${run_dir}/${wf_name}/results/fastqc_post_trim"
+      mkdir -p "${run_dir}/${wf_name}/results/logs/umi_tools_trim_reports"
       mkdir -p "${run_dir}/${wf_name}/results/logs/alignment_reports"
       ;;
   esac

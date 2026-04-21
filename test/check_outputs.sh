@@ -107,8 +107,15 @@ case "${WF_NAME}" in
     check_min_lines "SEACR FRiP summary" "${RESULTS}/peaks/seacr/qc/frip_summary_detailed.tsv" 2
     ;;
 
-  RNAseq_PE|RNAseq_SE)
+  RNAseq_PE|RNAseq_SE|sRNAseq_SE)
     check_min_lines "count table" "${RESULTS}/feature_counts/count_table.txt" 2
+    for bam in "${RESULTS}"/alignment/*.bam; do
+      check_bam "alignment BAM: $(basename "${bam}")" "${bam}"
+    done
+    ;;
+
+  RNAseqTE_PE)
+    check_min_lines "TE count table" "${RESULTS}/TEcount/count_table_all.csv" 2
     for bam in "${RESULTS}"/alignment/*.bam; do
       check_bam "alignment BAM: $(basename "${bam}")" "${bam}"
     done

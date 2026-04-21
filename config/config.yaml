@@ -1,4 +1,5 @@
 workflow: ""
+singularity_image: ""
 sample_file: "config/samples_info.tab"
 genome: ""
 spike_genome: ""

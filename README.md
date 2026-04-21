@@ -185,7 +185,12 @@ Contains conda environment specifications for the pipeline.
 			-d	.fastq directory"\
 			-s	parameters to pass to snakemake (e.g. --unlock)\
 			-w	workflow name (e.g. 'RNAseq_PE')\
-			-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory\
+         -c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory\
+			-i	Path to Singularity image (.sif) override. Default container path is used when available\
+
+   Default execution mode prefers container image at /gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq.sif.
+   If image is missing and -i is not provided, workflow falls back to host conda environment.
+   Optional override for default path: CVRCSEQ_SIF=/path/to/image.sif\
 
 ## Software links
 
@@ -201,6 +206,10 @@ Contains conda environment specifications for the pipeline.
 [bowtie2](https://github.com/BenLangmead/bowtie2), 
 [macs2](https://pypi.org/project/MACS2/), 
 [seacr](https://github.com/FredHutch/SEACR)
+
+## Container documentation
+
+For Docker/Singularity setup, update workflow, and troubleshooting, see [container/README.md](container/README.md).
 
 
 

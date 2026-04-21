@@ -12,8 +12,11 @@ Three levels of testing are available:
 
 Quick Start
 -----------
-# Activate the conda environment (required for dry-run and integration tests)
+# Preferred: activate the conda environment first (recommended for dry-run and integration tests)
 source /gpfs/data/cvrcbioinfolab/shared_conda_envs/condaload_CVRCseq.sh
+
+# Fallback: if activation is unavailable, force Snakemake via explicit launcher
+SNAKEMAKE_CMD="conda run -p /gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq snakemake" bash test/run_dryrun_tests.sh
 
 # Run all unit tests (no conda required)
 bash test/test_snakemake_init.sh
@@ -22,18 +25,20 @@ python -m pytest test/test_cat_rename.py -v
 # Run all dry-run tests
 bash test/run_dryrun_tests.sh
 
-# Run full integration tests (on a compute node)
-bash test/run_dryrun_tests.sh --integration
+# Run full integration tests with container (on a compute node)
+bash test/run_dryrun_tests.sh --integration --with-container /gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq.sif
 
+# Run full integration tests with conda (on a compute node)
+bash test/run_dryrun_tests.sh --integration
 
 Unit Tests
 ----------
 test/test_snakemake_init.sh
   Tests argument validation in workflow/scripts/snakemake_init.sh.
-  Stubs out conda, snakemake, and multiqc — no pipeline dependencies required.
+  Stubs out conda, snakemake, multiqc, and singularity — no pipeline dependencies required.
   Run with: bash test/test_snakemake_init.sh
 
-  Tests (10):
+  Tests (13):
     - exits with code 1 when no arguments provided
     - exits with code 1 when -d (fastq directory) is missing
     - exits with code 1 when -w (workflow) is missing
@@ -41,6 +46,9 @@ test/test_snakemake_init.sh
     - passes validation for each supported workflow:
         RNAseq_PE, ATACseq_PE, CUT-RUN_PE, ChIPseq_PE, RNAseqTE_PE
     - -c flag is boolean and does not consume the -d value
+      - uses container by default when CVRCSEQ_SIF points to a valid image
+      - accepts -i with a valid image path in container mode
+      - exits when -i points to a missing image
 
 test/test_cat_rename.py
   Tests all functions in workflow/scripts/cat_rename.py using pytest.
@@ -78,8 +86,10 @@ test/run_dryrun_tests.sh
 
   Parameters:
     --integration         Run real workflows instead of dry-run.
+    --with-container PATH Run integration jobs with Snakemake Singularity wrapping using PATH as the .sif image.
+                          Requires --integration.
     --keep                Keep .test-work after successful completion.
-    --workflow NAME        Run only one workflow. Also accepted as --workflow=NAME or -w NAME.
+    --workflow NAME       Run only one workflow. Also accepted as --workflow=NAME or -w NAME.
     SNAKEMAKE_CMD=...     Environment variable to override the snakemake invocation.
                           Example: SNAKEMAKE_CMD="conda run -n CVRCseq snakemake" bash test/run_dryrun_tests.sh
 
@@ -98,6 +108,7 @@ test/run_dryrun_tests.sh
     bash test/run_dryrun_tests.sh                                     # all dry-runs
     bash test/run_dryrun_tests.sh -w ATACseq_PE                       # one dry-run
     bash test/run_dryrun_tests.sh --integration                       # all workflows
+    bash test/run_dryrun_tests.sh --integration --with-container /gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq.sif
     bash test/run_dryrun_tests.sh --integration --workflow CUT-RUN_PE --keep
 
 test/subsample_fastq.sh
@@ -133,6 +144,7 @@ test/check_outputs.sh
 
 Notes
 -----
+- The test harness requires a runnable Snakemake command and exits with an error otherwise.
 - Dry-run mode does not produce pipeline result files.
 - Integration mode produces outputs inside .test-work/<workflow>/<workflow>/results.
 - On failure, .test-work is preserved for debugging even without --keep.

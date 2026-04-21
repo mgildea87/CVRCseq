@@ -8,6 +8,8 @@ SNAKEMAKE_CMD="${SNAKEMAKE_CMD:-snakemake}"
 KEEP=false
 INTEGRATION=false
 WORKFLOW_FILTER=""
+WITH_CONTAINER=false
+CONTAINER_SIF=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -19,6 +21,21 @@ while [[ $# -gt 0 ]]; do
       INTEGRATION=true
       shift
       ;;
+    --with-container=*)
+      WITH_CONTAINER=true
+      CONTAINER_SIF="${1#--with-container=}"
+      shift
+      ;;
+    --with-container)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --with-container requires a .sif path"
+        echo "Usage: $0 [--integration] [--with-container /path/to/image.sif] [--keep] [--workflow NAME]"
+        exit 1
+      fi
+      WITH_CONTAINER=true
+      CONTAINER_SIF="$2"
+      shift 2
+      ;;
     --workflow=*)
       WORKFLOW_FILTER="${1#--workflow=}"
       shift
@@ -26,7 +43,7 @@ while [[ $# -gt 0 ]]; do
     --workflow|-w)
       if [[ $# -lt 2 ]]; then
         echo "Error: $1 requires a workflow name"
-        echo "Usage: $0 [--integration] [--keep] [--workflow NAME]"
+        echo "Usage: $0 [--integration] [--with-container /path/to/image.sif] [--keep] [--workflow NAME]"
         exit 1
       fi
       WORKFLOW_FILTER="$2"
@@ -34,7 +51,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "Unknown argument: $1"
-      echo "Usage: $0 [--integration] [--keep] [--workflow NAME]"
+      echo "Usage: $0 [--integration] [--with-container /path/to/image.sif] [--keep] [--workflow NAME]"
       exit 1
       ;;
   esac
@@ -69,11 +86,44 @@ if ! ${SNAKEMAKE_CMD} --version >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ "${WITH_CONTAINER}" == true && "${INTEGRATION}" != true ]]; then
+  echo "Error: --with-container can only be used with --integration"
+  exit 1
+fi
+
+if [[ "${WITH_CONTAINER}" == true ]]; then
+  if [[ -z "${CONTAINER_SIF}" || ! -f "${CONTAINER_SIF}" ]]; then
+    echo "Error: container image not found: ${CONTAINER_SIF}"
+    exit 1
+  fi
+
+  if ! command -v singularity >/dev/null 2>&1; then
+    if type module >/dev/null 2>&1; then
+      module load singularity/3.11.5 >/dev/null 2>&1 || true
+    fi
+  fi
+
+  if ! command -v singularity >/dev/null 2>&1; then
+    echo "Error: singularity is required for --with-container but was not found"
+    exit 1
+  fi
+fi
+
 if [[ "${INTEGRATION}" == true ]]; then
   echo "Running Snakemake INTEGRATION tests (jobs will be submitted via Slurm)"
 else
   echo "Running Snakemake dry-run tests"
 fi
+
+container_snakemake_args=()
+container_config_args=()
+if [[ "${WITH_CONTAINER}" == true ]]; then
+  container_snakemake_args=(--use-singularity --singularity-args "--bind /gpfs")
+  container_config_args=("singularity_image=${CONTAINER_SIF}")
+  echo "Container mode enabled for integration jobs"
+  echo "Container image: ${CONTAINER_SIF}"
+fi
+
 echo "Root: ${ROOT_DIR}"
 echo "Work: ${WORK_DIR}"
 
@@ -289,12 +339,17 @@ for cfg in "${ACTIVE_CONFIGS[@]}"; do
   if [[ "${INTEGRATION}" == true ]]; then
     echo "--- [${wf_name}] integration run with ${cfg} ---"
     mkdir -p "${run_dir}/slurm_logs"
+    config_overrides=("sample_file=${sample_file_abs}")
+    if [[ ${#container_config_args[@]} -gt 0 ]]; then
+      config_overrides+=("${container_config_args[@]}")
+    fi
     if ${SNAKEMAKE_CMD} \
       --snakefile "${ROOT_DIR}/workflow/Snakefile" \
       --configfile "${cfg_path}" \
-      --config "sample_file=${sample_file_abs}" \
+      --config "${config_overrides[@]}" \
       --directory "${run_dir}" \
       --profile "${ROOT_DIR}/config/profile" \
+      "${container_snakemake_args[@]}" \
       --rerun-incomplete; then
       echo "Pipeline complete. Checking outputs..."
       if bash "${ROOT_DIR}/test/check_outputs.sh" "${wf_name}" "${run_dir}"; then

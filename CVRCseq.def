@@ -28,8 +28,8 @@ From: continuumio/miniconda3:latest
 
     Build — Option B: pull from Docker Hub (no root needed; image built via GitHub Actions CI):
         module load singularity/3.11.5
-        singularity pull --dir /gpfs/data/cvrcbioinfolab/gildem01/ docker://DOCKERHUB_USERNAME/cvrcs eq:latest
-        mv /gpfs/data/cvrcbioinfolab/gildem01/cvrcs eq_latest.sif /gpfs/data/cvrcbioinfolab/gildem01/CVRCseq.sif
+        singularity pull --dir /gpfs/data/cvrcbioinfolab/gildem01/ docker://mgildea87/cvrcsseq:latest
+        mv /gpfs/data/cvrcbioinfolab/gildem01/cvrcsseq_latest.sif /gpfs/data/cvrcbioinfolab/gildem01/CVRCseq.sif
 
     Test:
         singularity exec --bind /gpfs /gpfs/data/cvrcbioinfolab/gildem01/CVRCseq.sif snakemake --version

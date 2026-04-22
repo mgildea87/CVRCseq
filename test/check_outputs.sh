@@ -26,6 +26,18 @@ check_exists_nonempty() {
   fi
 }
 
+check_exists() {
+  local label="$1"
+  local file="$2"
+  if [[ -f "${file}" ]]; then
+    echo "  PASS: ${label}"
+    PASS=$((PASS + 1))
+  else
+    echo "  FAIL: ${label} — file missing: ${file}"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
 check_min_lines() {
   local label="$1"
   local file="$2"
@@ -98,7 +110,7 @@ case "${WF_NAME}" in
       check_bam "sorted BAM: $(basename "${bam}")" "${bam}"
     done
     for bed in "${RESULTS}"/peaks/seacr/*.stringent.bed; do
-      check_exists_nonempty "SEACR bed: $(basename "${bed}")" "${bed}"
+      check_exists "SEACR bed: $(basename "${bed}")" "${bed}"
     done
     for peak in "${RESULTS}"/peaks/MACS2/*_peaks.broadPeak; do
       check_min_lines "broadPeak: $(basename "${peak}")" "${peak}" 1

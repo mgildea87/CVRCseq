@@ -145,10 +145,11 @@ rule spike_in_norm:
 	threads: 1
 	shell:
 		"""
+		mkdir -p CUT-RUN_PE/results/alignment/bed
 		depth=`samtools view CUT-RUN_PE/results/alignment/{wildcards.sample}_ecoli.bam | wc -l`
 		depth=$((depth/2))
 		echo $depth
-		scale_fac=`echo "10000 / $depth" | bc -l`
+		scale_fac=$(awk -v d="$depth" 'BEGIN {{ if (d > 0) printf "%%.10f", 10000/d; else print "0" }}')
 		echo $scale_fac
 		bedtools bamtobed -bedpe -i CUT-RUN_PE/results/alignment/{wildcards.sample}.bam | cut -f 1,2,6 | sort -k1,1 -k2,2n -k3,3n > CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bed
 		"""

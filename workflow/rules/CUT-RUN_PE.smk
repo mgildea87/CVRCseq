@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/MACS2', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks', 'CUT-RUN_PE/results/peaks/seacr','CUT-RUN_PE/results/peaks/seacr/qc', 'CUT-RUN_PE/results/peaks/MACS2',  'CUT-RUN_PE/results/peaks/MACS2/qc']:
+for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/MACS2', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks', 'CUT-RUN_PE/results/peaks/MACS2',  'CUT-RUN_PE/results/peaks/MACS2/qc']:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 
@@ -32,13 +32,11 @@ rule all:
 	input:
 		expand('results/fastqc/{sample_file}{read}_fastqc.html', sample_file = sample_ids_file, read = read),
 		expand('results/fastqc_post_trim/{sample_file}_trimmed{read}_fastqc.html', sample_file = sample_ids_file, read = read),
-		expand('results/peaks/seacr/{sample}.stringent.bed', sample = sample_ids),
 		expand('results/peaks/MACS2/{sample}_peaks.broadPeak', sample = sample_ids),
 		expand('results/alignment/frag_len/{sample}.txt', sample = sample_ids_file),
 		expand('results/alignment/{sample}_sorted.bam.bai', sample = sample_ids_file),
 		expand('results/alignment/{sample}_sorted.bam', sample = sample_ids_file),
-		"results/peaks/MACS2/qc/frip_summary_detailed.tsv",
-		"results/peaks/seacr/qc/frip_summary_detailed.tsv"
+		"results/peaks/MACS2/qc/frip_summary_detailed.tsv"
 
 rule fastqc:
 	input: 
@@ -155,20 +153,6 @@ rule spike_in_norm:
 		"""
 		'bedtools genomecov -bg -i CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bed -scale $scale_fac -g %s > CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bedgraph' % (chr_lens)
 
-rule SEACR:
-	input:
-		exp='results/alignment/bed/{sample}_Antibody.bedgraph',
-		con='results/alignment/bed/{sample}_Control.bedgraph'
-	output:
-		'results/peaks/seacr/{sample}.stringent.bed'
-	threads: 1
-	resources: 
-		time_min=120, mem_mb=40000
-	params:
-		'non stringent'
-	shell:
-		'bash $(which SEACR_1.3.sh) {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/seacr/{wildcards.sample}'
-
 rule MACS2:
 	input:
 		exp='results/alignment/{sample}_Antibody.bam',
@@ -209,34 +193,6 @@ rule FRP_MACS2:
 		"""
 		# Count total mapped reads
 		total_reads=$(samtools view -c -F 260 {input.bam})
-    total_fragments=$(( total_reads / 2 ))
-		# Count reads overlapping peaks
-		reads_in_peaks=$(samtools sort -n -@ {threads} -m 3G {input.bam} | bedtools bamtobed -bedpe -i stdin | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
-        
-		# Count total number of peaks called
-		num_peaks=$(wc -l < {input.peaks})
-
-		# Calculate FRiP
-		frip=$(awk -v a="$reads_in_peaks" -v b="$total_fragments" \
-		    'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
-
-		# Save all values to a single line
-		echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$reads_in_peaks\\t$frip" > {output.stats}
-		"""
-		
-rule FRP_seacr:
-	input:
-		bam = "results/alignment/{sample}_Antibody_sorted.bam",
-		peaks = "results/peaks/seacr/{sample}.stringent.bed"
-	output:
-		stats = "results/peaks/seacr/qc/{sample}_frip_stats.txt"
-	threads:8
-	resources: 
-		mem_mb=50000
-	shell:
-		"""
-		# Count total mapped reads
-		total_reads=$(samtools view -c -F 260 {input.bam})
     	total_fragments=$(( total_reads / 2 ))
 		# Count reads overlapping peaks
 		reads_in_peaks=$(samtools sort -n -@ {threads} -m 3G {input.bam} | bedtools bamtobed -bedpe -i stdin | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
@@ -251,7 +207,7 @@ rule FRP_seacr:
 		# Save all values to a single line
 		echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$reads_in_peaks\\t$frip" > {output.stats}
 		"""
-
+		
 rule aggregate_qc_summary_MACS2:
 	input:
 		# Collects all stats files from the previous step
@@ -262,11 +218,3 @@ rule aggregate_qc_summary_MACS2:
 		"../scripts/aggregate_peak_qc.py"
 
 
-rule aggregate_qc_summary_seacr:
-	input:
-		# Collects all stats files from the previous step
-		stats_files = expand("results/peaks/seacr/qc/{sample}_frip_stats.txt", sample=sample_ids)
-	output:
-		summary = "results/peaks/seacr/qc/frip_summary_detailed.tsv"
-	script:
-		"../scripts/aggregate_peak_qc.py"

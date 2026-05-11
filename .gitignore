@@ -6,3 +6,4 @@ CVRCseq.Rproj
 __pycache__/
 *.pyc
 *.pyo
+resource_analysis/

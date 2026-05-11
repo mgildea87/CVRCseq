@@ -8,3 +8,6 @@ TE_GTF: ""
 chromosome_lengths: ""
 effective_genome_size: ""
 prepDE_length: ""
+stringtie_strandedness: "--rf"
+featurecounts_strandedness: 2
+TE_strandedness: "reverse"

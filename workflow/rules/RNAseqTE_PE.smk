@@ -80,7 +80,7 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=660, mem_mb=40000
+		time_min=lambda wildcards, input: max(120, int((2.285098 + 0.00378795 * input.size_mb * 2.000) * 1.500)), mem_mb=40000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignMatesGapMax 1000000 --outFilterMismatchNmax 999 --alignIntronMax 1000000 ' 
 		'--alignSplicedMateMapLmin 3 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNoverReadLmax 0.04 --outSAMunmapped Within KeepPairs --outSAMattributes All --alignIntronMin 20 '
@@ -107,7 +107,7 @@ rule TEcount:
 		counts = 'results/TEcount/{sample}.cntTable'
 	threads: 1
 	resources: 
-		time_min=2000, mem_mb=80000, partition="cpu_medium"
+		time_min=lambda wildcards, input: max(120, int(171 + 0.01202 * input.size_mb * 2)), mem_mb=80000, partition="cpu_medium"
 	params:
 		'--format BAM --mode multi --stranded reverse --outdir RNAseqTE_PE/results/TEcount/ --sortByPos'
 	shell:

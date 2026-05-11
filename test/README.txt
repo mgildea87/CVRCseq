@@ -149,3 +149,6 @@ Notes
 - Integration mode produces outputs inside .test-work/<workflow>/<workflow>/results.
 - On failure, .test-work is preserved for debugging even without --keep.
 - RNAseqTE_PE integration requires a valid TE annotation in test/config/config_RNAseqTE_PE.yaml (TE_GTF).
+- CUT-RUN container integration previously failed in SEACR with: Fatal error: cannot open file './SEACR_1.3.R'.
+  Fix strategy: the container build now patches SEACR_1.3.sh so SEACR_1.3.R is resolved relative to the script
+  location. The workflow rule remains the standard command invocation.

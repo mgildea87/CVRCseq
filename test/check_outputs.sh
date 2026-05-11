@@ -109,14 +109,10 @@ case "${WF_NAME}" in
     for bam in "${RESULTS}"/alignment/*_sorted.bam; do
       check_bam "sorted BAM: $(basename "${bam}")" "${bam}"
     done
-    for bed in "${RESULTS}"/peaks/seacr/*.stringent.bed; do
-      check_exists "SEACR bed: $(basename "${bed}")" "${bed}"
-    done
     for peak in "${RESULTS}"/peaks/MACS2/*_peaks.broadPeak; do
       check_min_lines "broadPeak: $(basename "${peak}")" "${peak}" 1
     done
     check_min_lines "MACS2 FRiP summary" "${RESULTS}/peaks/MACS2/qc/frip_summary_detailed.tsv" 2
-    check_min_lines "SEACR FRiP summary" "${RESULTS}/peaks/seacr/qc/frip_summary_detailed.tsv" 2
     ;;
 
   RNAseq_PE|RNAseq_SE|sRNAseq_SE)

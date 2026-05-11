@@ -12,7 +12,6 @@ This project uses a Docker-built software environment that is converted to Singu
 
 - The full CVRCseq conda software environment from `workflow/envs/CVRCseq.yml`.
 - Tools such as Snakemake, Python, MultiQC, and workflow dependencies.
-- A build-time patch for `SEACR_1.3.sh` so `SEACR_1.3.R` is resolved relative to the script directory.
 
 ## What is NOT in the container
 
@@ -128,7 +127,3 @@ module load singularity/3.11.5
 
 - `singularity pull` creates `cvrcsseq_latest.sif`
   - This is normal. Rename to `CVRCseq.sif` for consistent usage.
-
-- CUT-RUN SEACR fails in container with `Fatal error: cannot open file './SEACR_1.3.R'`
-  - Cause: some SEACR installs reference the R script via current working directory.
-  - Fix in this repo: `Dockerfile` patches `SEACR_1.3.sh` at build time to use script-relative lookup.

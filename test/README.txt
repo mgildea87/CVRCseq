@@ -125,7 +125,7 @@ test/check_outputs.sh
   Can also be run manually: bash test/check_outputs.sh <workflow_name> <run_dir>
 
   Internal checks:
-    check_exists_nonempty   File exists and has non-zero size (bigwigs, SEACR beds).
+    check_exists_nonempty   File exists and has non-zero size (bigwigs).
     check_min_lines         File exists and has at least N lines (count tables, peak files, FRiP summaries).
     check_bam               samtools quickcheck — valid BAM header and EOF block.
 
@@ -134,8 +134,8 @@ test/check_outputs.sh
                                       narrowPeak >= 1 line; FRiP summary >= 2 lines
     ChIPseq_PE                        sorted BAMs valid; bigwigs non-empty;
                                       narrowPeak >= 1 line; FRiP summary >= 2 lines
-    CUT-RUN_PE                        sorted BAMs valid; SEACR stringent.bed non-empty;
-                                      MACS2 broadPeak >= 1 line; MACS2 and SEACR FRiP summaries >= 2 lines
+    CUT-RUN_PE                        sorted BAMs valid; MACS2 broadPeak >= 1 line;
+                      MACS2 FRiP summary >= 2 lines
     RNAseq_PE / RNAseq_SE / sRNAseq_SE   count_table.txt >= 2 lines; alignment BAMs valid
     RNAseqTE_PE                       TEcount/count_table_all.csv >= 2 lines; alignment BAMs valid
     RNAseq_PE_HISAT2_stringtie        gene and transcript count matrices >= 2 lines; alignment BAMs valid
@@ -149,6 +149,3 @@ Notes
 - Integration mode produces outputs inside .test-work/<workflow>/<workflow>/results.
 - On failure, .test-work is preserved for debugging even without --keep.
 - RNAseqTE_PE integration requires a valid TE annotation in test/config/config_RNAseqTE_PE.yaml (TE_GTF).
-- CUT-RUN container integration previously failed in SEACR with: Fatal error: cannot open file './SEACR_1.3.R'.
-  Fix strategy: the container build now patches SEACR_1.3.sh so SEACR_1.3.R is resolved relative to the script
-  location. The workflow rule remains the standard command invocation.

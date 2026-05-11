@@ -41,7 +41,7 @@ Currently, there are **3 DNA binding/enrichment pipelines** available:
    *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
 
 2. **CUT-RUN_PE**  
-   *Paired-end data*: `fastqc → fastp → bowtie2 → seacr & macs2`
+   *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
 
 3. **ATACseq_PE**  
    *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
@@ -212,8 +212,7 @@ Contains conda environment specifications for the pipeline.
 [TEcount](https://github.com/mhammell-laboratory/TEtranscripts), 
 [umi-tools](https://github.com/CGATOxford/UMI-tools), 
 [bowtie2](https://github.com/BenLangmead/bowtie2), 
-[macs2](https://pypi.org/project/MACS2/), 
-[seacr](https://github.com/FredHutch/SEACR)
+[macs2](https://pypi.org/project/MACS2/)
 
 ## Container documentation
 

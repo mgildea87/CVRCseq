@@ -11,9 +11,6 @@ table = pd.read_table(sample_file)
 sample = table['Sample']
 replicate = table['Replicate']
 condition = table['Condition']
-File_R1 = table['File_Name_R1']
-File_R2 = table['File_Name_R2']
-File_names = File_R1.append(File_R2)
 genome = config["genome"]
 
 sample_ids = []
@@ -80,7 +77,7 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000
+		time_min=lambda wildcards, input: max(120, int((0.714907 + 0.00343022 * input.size_mb * 2.000) * 1.500)), mem_mb=60000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignMatesGapMax 1000000 --outFilterMismatchNmax 999 --alignIntronMax 1000000 ' 
 		'--alignSplicedMateMapLmin 3 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNoverReadLmax 0.04 --outSAMunmapped Within KeepPairs --outSAMattributes All --alignIntronMin 20 '
@@ -89,15 +86,15 @@ rule align:
 		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseq_PE/results/alignment/{wildcards.sample}_ | samtools view -bh > RNAseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
 
 rule count:
-	input:
-		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
-	output:
-		counts = 'results/feature_counts/count_table.txt'
-	threads: 16
-	resources: 
-		time_min=600, mem_mb=30000
-	params:
-		'-p --countReadPairs -g gene_id -s 2 -Q 5 --extraAttributes gene_type,gene_name'
-	shell:
-		'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
+       input:
+	       bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
+       output:
+	       counts = 'results/feature_counts/count_table.txt'
+       threads: 16
+       resources: 
+	       time_min=600, mem_mb=30000
+       params:
+	       '-p --countReadPairs -g gene_id -s {stranded} -Q 5 --extraAttributes gene_type,gene_name'.format(stranded=config["featurecounts_strandedness"])
+       shell:
+	       'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
 

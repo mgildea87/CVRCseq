@@ -71,7 +71,7 @@ rule align:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
 	resources: 
-		time_min=240, mem_mb=60000
+		time_min=lambda wildcards, input: max(120, int((0.714907 + 0.00343022 * input.size_mb * 2.000) * 1.500)), mem_mb=60000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignEndsType EndToEnd --outFilterMismatchNmax 1'
 		'--outFilterMultimapScoreRange 0 --outFilterMultimapNmax 10 --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0'
@@ -80,14 +80,14 @@ rule align:
 		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix sRNAseq_SE/results/alignment/{wildcards.sample}_ | samtools view -bh > sRNAseq_SE/results/alignment/{wildcards.sample}.bam' % (genome)
 		
 rule count:
-	input:
-		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
-	output:
-		counts = 'results/feature_counts/count_table.txt'
-	threads: 16
-	resources: 
-		time_min=480, mem_mb=30000
-	params:
-		'-g gene_id -s 1 -Q 5 -F GTF --extraAttributes gene_type,gene_name'
-	shell:
-		'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
+       input:
+	       bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
+       output:
+	       counts = 'results/feature_counts/count_table.txt'
+       threads: 16
+       resources: 
+	       time_min=600, mem_mb=30000
+       params:
+	       '-g gene_id -s {stranded} -Q 5 -F GTF --extraAttributes gene_type,gene_name'.format(stranded=config["featurecounts_strandedness"])
+       shell:
+	       'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)

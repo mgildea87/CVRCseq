@@ -2,6 +2,9 @@ configfile: "config/config.yaml"
 wf = config["workflow"]
 print(wf)
 
+# Global singularity image — activated per-job when --use-singularity is passed
+singularity: config.get("singularity_image", "")
+
 module analysis:
     snakefile:
         'rules/%s.smk' % (wf)

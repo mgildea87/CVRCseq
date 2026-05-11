@@ -41,7 +41,7 @@ Currently, there are **3 DNA binding/enrichment pipelines** available:
    *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
 
 2. **CUT-RUN_PE**  
-   *Paired-end data*: `fastqc → fastp → bowtie2 → seacr & macs2`
+   *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
 
 3. **ATACseq_PE**  
    *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
@@ -98,11 +98,19 @@ Contains general and workflow-specific configuration parameters:
 **ChIPseq_PE & ATACseq_PE:**
 - `effective_genome_size` - For MACS2
 
+
 **RNAseq_HISAT2_stringtie variants:**
 - `prepDE_length` - Average fragment length for stringtie prepDE script
+- `stringtie_strandedness` - Strandedness flag for StringTie in HISAT2 workflows. Example: `stringtie_strandedness: "--rf"` (for reverse-forward)
+
 
 **RNAseqTE_PE:**
 - `TE_GTF` - GTF file with TE annotations (available from [MGH lab](https://www.dropbox.com/scl/fo/jdpgn6fl8ngd3th3zebap/ACdZkShDC1au-OckIipI5kM/TEtranscripts/TE_GTF?rlkey=41oz6ppggy82uha5i3yo1rnlx&e=1&subfolder_nav_tracking=1&dl=0))
+- `TE_strandedness` - Strandedness setting for TEcount in RNAseqTE_PE workflow. Example: `TE_strandedness: "reverse"`
+
+
+**RNAseq_PE, RNAseq_SE, sRNAseq_SE:**
+- `featurecounts_strandedness` - Strandedness setting for featureCounts rules. Accepts 0 (unstranded), 1 (stranded), or 2 (reverse stranded). Example: `featurecounts_strandedness: 2`
 
 ---
 
@@ -185,7 +193,12 @@ Contains conda environment specifications for the pipeline.
 			-d	.fastq directory"\
 			-s	parameters to pass to snakemake (e.g. --unlock)\
 			-w	workflow name (e.g. 'RNAseq_PE')\
-			-c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory\
+         -c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory\
+			-i	Path to Singularity image (.sif) override. Default container path is used when available\
+
+   Default execution mode prefers container image at /gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq.sif.
+   If image is missing and -i is not provided, workflow falls back to host conda environment.
+   Optional override for default path: CVRCSEQ_SIF=/path/to/image.sif\
 
 ## Software links
 
@@ -199,8 +212,11 @@ Contains conda environment specifications for the pipeline.
 [TEcount](https://github.com/mhammell-laboratory/TEtranscripts), 
 [umi-tools](https://github.com/CGATOxford/UMI-tools), 
 [bowtie2](https://github.com/BenLangmead/bowtie2), 
-[macs2](https://pypi.org/project/MACS2/), 
-[seacr](https://github.com/FredHutch/SEACR)
+[macs2](https://pypi.org/project/MACS2/)
+
+## Container documentation
+
+For Docker/Singularity setup, update workflow, and troubleshooting, see [container/README.md](container/README.md).
 
 
 

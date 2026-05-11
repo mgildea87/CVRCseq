@@ -1,0 +1,6 @@
+workflow: "RNAseq_PE_HISAT2_stringtie_nvltrx"
+sample_file: "test/config/samples_info_RNAseq.tab"
+genome: "/gpfs/data/cvrcbioinfolab/gildem01/genomes/mm10/HISAT2/mm10_HISAT2"
+GTF: "/gpfs/data/cvrcbioinfolab/gildem01/genomes/mm10/gencode.vM25.annotation.gtf"
+prepDE_length: "65"
+stringtie_strandedness: "--rf"

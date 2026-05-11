@@ -2,3 +2,4 @@ workflow: "sRNAseq_SE"
 sample_file: "test/config/samples_info_RNAseq.tab"
 genome: "/gpfs/data/cvrcbioinfolab/gildem01/genomes/mm10/STAR_150_2.7.7a"
 GTF: "/gpfs/data/cvrcbioinfolab/gildem01/genomes/mm10/gencode.vM25.annotation.gtf"
+featurecounts_strandedness: 2

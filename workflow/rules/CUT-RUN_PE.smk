@@ -167,7 +167,7 @@ rule SEACR:
 	params:
 		'non stringent'
 	shell:
-		'bash SEACR_1.3.sh {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/seacr/{wildcards.sample}'
+		'bash $(which SEACR_1.3.sh) {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/seacr/{wildcards.sample}'
 
 rule MACS2:
 	input:

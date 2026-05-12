@@ -1,223 +1,157 @@
-# 🐍 **CVRCseq** 🐍
+# CVRCseq
 
-CVRCseq is a collection of commonly used pipelines integrated into a single workflow via **Snakemake**. Previously, these existed as individual Snakemake workflows. This unified workflow is designed to run on **NYU's UltraViolet HPC**, which utilizes **Slurm** and offers a variety of different node types.
+CVRCseq is a unified Snakemake workflow collection for common NGS analyses on Slurm-based HPC systems (developed for NYU UltraViolet).
 
----
+## Available Workflows
 
-## **Available Pipelines**
+### RNA-seq
 
-### 🧬 **RNA-seq Analysis**
-Currently, there are **5 RNA-seq analysis pipelines** available:
+- `RNAseq_PE`: paired-end, `fastqc -> fastp -> STAR -> featureCounts`
+- `RNAseq_SE`: single-end, `fastqc -> fastp -> STAR -> featureCounts`
+- `RNAseq_PE_HISAT2_stringtie`: paired-end, `fastqc -> fastp -> HISAT2 -> StringTie`
+- `RNAseq_PE_HISAT2_stringtie_nvltrx`: paired-end, `fastqc -> fastp -> HISAT2 -> StringTie -> novel transcript workflow`
+- `RNAseqTE_PE`: paired-end, `fastqc -> fastp -> STAR -> TEcount`
 
-1. **RNAseq_PE**  
-   *Paired-end data*: `fastqc → fastp → STAR → featurecounts`
+### Small RNA-seq
 
-2. **RNAseq_SE**  
-   *Single-end data*: `fastqc → fastp → STAR → featurecounts`
+- `sRNAseq_SE`: single-end, `fastqc -> umi-tools -> STAR -> featureCounts`
 
-3. **RNAseq_HISAT2_stringtie**  
-   *Paired-end data*: `fastqc → fastp → HISAT2 → stringtie`
+### DNA Binding / Enrichment
 
-4. **RNAseq_HISAT2_stringtie_nvltrx**  
-   *Paired-end data*: `fastqc → fastp → HISAT2 → stringtie → novel transcript identification`
+- `ChIPseq_PE`: paired-end, `fastqc -> fastp -> bowtie2 -> MACS2`
+- `CUT-RUN_PE`: paired-end, `fastqc -> fastp -> bowtie2 -> MACS2`
+- `ATACseq_PE`: paired-end, `fastqc -> fastp -> bowtie2 -> MACS2`
 
-5. **RNAseqTE_PE**  
-   *Paired-end data*: `fastqc → fastp → STAR → TEcount`
+## Repository Structure
 
----
+- `workflow/Snakefile`: top-level workflow entry point; loads one rules file based on `workflow` in config.
+- `workflow/rules/*.smk`: per-workflow rule definitions.
+- `workflow/scripts/snakemake_init.sh`: main launcher script.
+- `workflow/scripts/cat_rename.py`: optional preprocessing step for lane concatenation and FASTQ renaming.
+- `config/config.yaml`: global and workflow-specific parameters.
+- `config/samples_info.tab`: sample metadata table.
+- `config/profile/config.yaml`: Snakemake profile and Slurm defaults.
+- `workflow/envs/CVRCseq.yml`: conda environment definition.
 
-### 🧬 **Small RNA-seq Analysis**
-Currently, there is **1 small RNA-seq analysis pipeline** available, designed to work with the **QIAseq miRNA Library Kit** from Qiagen:
+## Configuration
 
-1. **sRNAseq_SE**  
-   *Single-end data*: `fastqc → umi-tools → STAR → featurecounts`
+### Sample Metadata (`config/samples_info.tab`)
 
----
+Expected columns include:
 
-### 🧬 **DNA Binding/Enrichment Analysis**
-Currently, there are **3 DNA binding/enrichment pipelines** available:
+1. FASTQ file names (R1/R2)
+2. User-friendly sample name
+3. Condition
+4. Replicate
+5. Antibody/control label (required for ChIP-seq and CUT-RUN)
+6. Final sample ID (used for renamed FASTQ output)
+7. Optional additional metadata
 
-1. **ChIPseq_PE**  
-   *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
+Notes:
 
-2. **CUT-RUN_PE**  
-   *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
+- `cat_rename.py` concatenates multi-lane FASTQs and renames files from this table.
+- For ChIP-seq and CUT-RUN pairs, keep sample name/condition/replicate consistent between IP and control rows.
 
-3. **ATACseq_PE**  
-   *Paired-end data*: `fastqc → fastp → bowtie2 → macs2`
+### Main Config (`config/config.yaml`)
 
+Common keys:
 
----
+- `sample_file`: path to sample table (default `config/samples_info.tab`)
+- `workflow`: active workflow name (set automatically by `snakemake_init.sh`)
+- `genome`: index path (STAR, HISAT2, or bowtie2 depending on workflow)
+- `GTF`: annotation file path
 
-## **📁 File Descriptions**
+Workflow-specific keys:
 
-### **Snakefiles**
-- **`workflow/Snakefile`** - Launches individual pipelines located in `workflow/rules`
+- `CUT-RUN_PE`:
+  - `spike_genome`
+  - `chromosome_lengths`
+  - `effective_genome_size`
+- `ChIPseq_PE`, `ATACseq_PE`:
+  - `effective_genome_size`
+- `RNAseq_PE_HISAT2_stringtie`, `RNAseq_PE_HISAT2_stringtie_nvltrx`:
+  - `prepDE_length`
+  - `stringtie_strandedness` (example: `"--rf"`)
+- `RNAseqTE_PE`:
+  - `TE_GTF`
+  - `TE_strandedness` (example: `"reverse"`)
+- `RNAseq_PE`, `RNAseq_SE`, `sRNAseq_SE`:
+  - `featurecounts_strandedness` (`0`, `1`, or `2`)
 
----
+## Running the Pipeline
 
-### **Configuration Files**
+### 1) Clone
 
-#### **`config/samples_info.tab`**
-Tab-delimited file containing sample metadata:
+```bash
+git clone https://github.com/mgildea87/CVRCseq.git
+cd CVRCseq
+```
 
-1. **R1 and R2 fastq file names** - As received from sequencing center (remove lane numbers `L00X` for multi-lane samples)
-2. **Simple sample names** - User-defined identifiers
-3. **Condition** - Experimental condition (e.g., diabetic vs non_diabetic)
-4. **Replicate number** - Biological replicate identifier
-5. **Antibody column** - Required for ChIPseq/CUT-RUN (specifies antibody vs control samples)
-6. **Final sample ID** - Concatenation of sample name, condition, replicate, and antibody columns
-7. **Additional metadata** - Can be added for downstream analysis
+### 2) Prepare inputs
 
-> **Notes:** 
+- Update `config/samples_info.tab`.
+- Update `config/config.yaml` for your references and workflow settings.
 
-1. `cat_rename.py` handles concatenation of multi-lane fastq files and renaming based on this table.
-2. **Paired samples** - For ChIPseq/CUT-RUN, sample name/condition/replicate should be identical between antibody and control pairs
+### 3) Launch
 
----
+```bash
+bash workflow/scripts/snakemake_init.sh -d /path/to/fastq -w RNAseq_PE
+```
 
-#### **`config/config.yaml`**
-Contains general and workflow-specific configuration parameters:
+Options:
 
-##### **Generic Requirements:**
-- **`sample_file`** - Location of `samples_info.tab` (default: `config/samples_info.tab`)
-- **`workflow`** - Name of workflow being used
-- **`genome`** - Location of indexed genome:
-  - RNAseq_PE/RNAseq_SE/sRNAseq_SE: STAR 2.7.7a index
-  - HISAT2 workflows: HISAT2 index
-  - ChIPseq/CUT-RUN/ATACseq: bowtie2 index
-- **`GTF`** - Location of annotation file
+- `-h`: help
+- `-d`: FASTQ directory (required)
+- `-w`: workflow name (required)
+- `-s`: extra Snakemake args (quote multiple flags, for example `-s "--dryrun --quiet"`)
+- `-c`: skip `cat_rename.py`
+- `-i`: override Singularity image path
 
-##### **Workflow-Specific config settings:**
+If needed, unlock a stale Snakemake directory:
 
-**CUT-RUN_PE:**
-- `spike_genome` - Spike-in genome index (bowtie2)
-- `chromosome_lengths` - Required for spike-in normalization. This file can be found in the STAR genome index folder (chrLength.txt)
-- `effective_genome_size` - For MACS2
+```bash
+snakemake --unlock --profile config/profile
+```
 
-**ChIPseq_PE & ATACseq_PE:**
-- `effective_genome_size` - For MACS2
+This requires loading the container or conda evironment where snakemake is installed
 
+## Execution Mode (Container vs Host)
 
-**RNAseq_HISAT2_stringtie variants:**
-- `prepDE_length` - Average fragment length for stringtie prepDE script
-- `stringtie_strandedness` - Strandedness flag for StringTie in HISAT2 workflows. Example: `stringtie_strandedness: "--rf"` (for reverse-forward)
+Default behavior:
 
+- Uses Singularity image at `/gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq.sif` if available.
+- Falls back to host conda environment (`/gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq`) if the image is absent and `-i` is not provided.
 
-**RNAseqTE_PE:**
-- `TE_GTF` - GTF file with TE annotations (available from [MGH lab](https://www.dropbox.com/scl/fo/jdpgn6fl8ngd3th3zebap/ACdZkShDC1au-OckIipI5kM/TEtranscripts/TE_GTF?rlkey=41oz6ppggy82uha5i3yo1rnlx&e=1&subfolder_nav_tracking=1&dl=0))
-- `TE_strandedness` - Strandedness setting for TEcount in RNAseqTE_PE workflow. Example: `TE_strandedness: "reverse"`
+Pull the image manually:
 
+```bash
+module load singularity/3.11.5
+singularity pull --dir /gpfs/data/cvrcbioinfolab/shared_conda_envs/ docker://mgildea87/cvrcsseq:latest
+```
 
-**RNAseq_PE, RNAseq_SE, sRNAseq_SE:**
-- `featurecounts_strandedness` - Strandedness setting for featureCounts rules. Accepts 0 (unstranded), 1 (stranded), or 2 (reverse stranded). Example: `featurecounts_strandedness: 2`
+For additional container details, see [container/README.md](container/README.md).
 
----
+## Running on a Compute Node
 
-#### **`config/profile/config.yaml`**
-Defines default **Slurm resources** for each rule.
+Launching from a compute node is recommended. Update `workflow/scripts/launch_sbatch.sh` and submit:
 
----
+```bash
+sbatch workflow/scripts/launch_sbatch.sh
+```
 
-### 📝 **Scripts**
+## Tool Links
 
-#### **`workflow/scripts/cat_rename.py`**
-Preprocessing script that:\
-1. Concatenates fastq files split across multiple sequencing lanes\
-2. Renames fastq files from verbose sequencing center IDs to user-defined names\
-3. Creates new files as `sample_id_Rx.fastq.gz`\
-4. Executed automatically via `snakemake_init.sh`\
-
-> **Skip option:** Use `-c` flag with `snakemake_init.sh` to bypass this step.
-
----
-
-#### **`workflow/scripts/snakemake_init.sh`**
-Main execution script that:\
-1. Executes `cat_rename.py`\
-2. Loads conda environment\
-3. Launches Snakemake pipeline\
-4. Runs MultiQC for quality control\
-
----
-
-#### **`workflow/scripts/launch_sbatch.sh`**
-Launches pipeline from compute node (recommended over login node). Edit the `snakemake_init.sh` command with desired parameters and submit via `sbatch`.
-
----
-
-#### **`workflow/scripts/condaload_CVRCseq.sh`**
-Sets environment variables and loads the conda environment.
-
----
-
-#### **`workflow/scripts/FRP.py`**
-Computes **Fraction of Reads in Peaks (FRP)** and outputs a summary table with:\
-- FRP values\
-- Total fragments\
-- Fragments within peaks\
-
----
-
-#### **`workflow/scripts/combine_TE_counts.py`**
-combines counts from TEcount into a single .csv file.
-
----
-
-### **Environment**
-#### **`workflow/envs/CVRCseq.yml`**
-Contains conda environment specifications for the pipeline.
- 
----
-
-## **🚀 Usage Instructions**
-
-### **Getting Started**
-
-1. **Clone repository**\
-  git clone https://github.com/mgildea87/CVRCseq.git
-
-2. **Update sample information**\
-  Edit config/samples_info.tab with fastq.gz file names and desired sample, condition, replicate names, and Antibody/IgG control status (if using)
-
-3. **Configure workflow**\
-  Update config.yaml with project-specific settings
-
-4. **Customize parameters (optional)**\
-  Set workflow specific parameters in the appropriate worklow/rules .smk file if desired. e.g. alignment parameters. 
-
-5. **Launch pipeline**\
-   bash workflow/scripts/snakemake_init.sh
-   Description of parameters:\
-			-h	help"\
-			-d	.fastq directory"\
-			-s	parameters to pass to snakemake (e.g. --unlock)\
-			-w	workflow name (e.g. 'RNAseq_PE')\
-         -c	Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to the *workflow*/inputs/fastq/ local directory\
-			-i	Path to Singularity image (.sif) override. Default container path is used when available\
-
-   Default execution mode prefers container image at /gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq.sif.
-   If image is missing and -i is not provided, workflow falls back to host conda environment.
-   Optional override for default path: CVRCSEQ_SIF=/path/to/image.sif\
-
-## Software links
-
-[snakemake](https://snakemake.github.io/), 
-[STAR](https://github.com/alexdobin/STAR), 
-[fastqc](https://github.com/s-andrews/FastQC), 
-[fastp](https://github.com/OpenGene/fastp), 
-[subread - featurecounts](https://github.com/ShiLab-Bioinformatics/subread), 
-[HISAT2](https://daehwankimlab.github.io/hisat2/), 
-[stringtie](https://ccb.jhu.edu/software/stringtie/), 
-[TEcount](https://github.com/mhammell-laboratory/TEtranscripts), 
-[umi-tools](https://github.com/CGATOxford/UMI-tools), 
-[bowtie2](https://github.com/BenLangmead/bowtie2), 
-[macs2](https://pypi.org/project/MACS2/)
-
-## Container documentation
-
-For Docker/Singularity setup, update workflow, and troubleshooting, see [container/README.md](container/README.md).
-
+- [Snakemake](https://snakemake.github.io/)
+- [STAR](https://github.com/alexdobin/STAR)
+- [FastQC](https://github.com/s-andrews/FastQC)
+- [fastp](https://github.com/OpenGene/fastp)
+- [subread/featureCounts](https://github.com/ShiLab-Bioinformatics/subread)
+- [HISAT2](https://daehwankimlab.github.io/hisat2/)
+- [StringTie](https://ccb.jhu.edu/software/stringtie/)
+- [TEtranscripts/TEcount](https://github.com/mhammell-laboratory/TEtranscripts)
+- [UMI-tools](https://github.com/CGATOxford/UMI-tools)
+- [bowtie2](https://github.com/BenLangmead/bowtie2)
+- [MACS2](https://pypi.org/project/MACS2/)
 
 
 

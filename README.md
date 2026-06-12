@@ -131,6 +131,79 @@ singularity pull --dir /gpfs/data/cvrcbioinfolab/shared_conda_envs/ docker://mgi
 
 For additional container details, see [container/README.md](container/README.md).
 
+## Host Orchestrator Requirements (Option 1)
+
+In the default architecture, Snakemake runs on the host as the workflow
+orchestrator, and each rule executes in the Singularity container via
+`--use-singularity`.
+
+This means one host-side Snakemake installation is still required even in
+container mode.
+
+### How `snakemake_init.sh` selects Snakemake
+
+`workflow/scripts/snakemake_init.sh` resolves the Snakemake executable in this
+order:
+
+1. `CVRCSEQ_SNAKEMAKE_BIN` (explicit override).
+2. `${CVRCSEQ_HOST_ENV:-/gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq}/bin/snakemake` (preferred default).
+3. A runnable `snakemake` found on `PATH`.
+4. Exit with an error if none of the above are valid.
+
+### Recommended host versions
+
+To minimize orchestration drift, keep host Snakemake and Python aligned with
+the CVRCseq environment definition in `workflow/envs/CVRCseq.yml`:
+
+- Python: `3.10.2`
+- Snakemake: `7.21.0`
+
+Note: exact host/container version matching is not strictly required for tools
+executed inside rules, but Snakemake major/minor compatibility on the host is
+strongly recommended.
+
+## Running on a Different System
+
+If you are running outside NYU UltraViolet, do not rely on default `/gpfs/...`
+paths. Set explicit host and container paths before launching.
+
+### Minimum requirements
+
+- A runnable host Snakemake installation (recommended: Snakemake `7.21.0` with Python `3.10.x`)
+- Singularity/Apptainer available on the host
+- A CVRCseq container image (`.sif`) accessible on your filesystem
+- A Slurm environment, or a compatible profile if adapting to a different scheduler
+
+### Recommended portable launch pattern
+
+Set explicit paths so `snakemake_init.sh` does not depend on site-specific defaults:
+
+```bash
+export CVRCSEQ_SNAKEMAKE_BIN=/path/to/host/env/bin/snakemake
+export CVRCSEQ_HOST_ENV=/path/to/host/env
+export CVRCSEQ_SIF=/path/to/CVRCseq.sif
+
+bash workflow/scripts/snakemake_init.sh -d /path/to/fastq -w RNAseq_PE
+```
+
+Optional: you can still pass `-i /path/to/CVRCseq.sif` on the command line to
+override image selection for a single run.
+
+### How host Snakemake is discovered
+
+With the launcher logic in `workflow/scripts/snakemake_init.sh`, executable
+resolution is:
+
+1. `CVRCSEQ_SNAKEMAKE_BIN`
+2. `${CVRCSEQ_HOST_ENV}/bin/snakemake` (or default host env path)
+3. `snakemake` from `PATH`
+
+### Portability note
+
+Current container wrapping binds `/gpfs` into the container. On non-GPFS
+systems, you may need to adjust bind paths in the launcher/profile to match
+your local filesystem layout.
+
 ## Running on a Compute Node
 
 Launching from a compute node is recommended. Update `workflow/scripts/launch_sbatch.sh` and submit:

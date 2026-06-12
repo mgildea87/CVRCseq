@@ -135,6 +135,26 @@ run_tool() {
   fi
 }
 
+# Resolve a deterministic host snakemake executable to avoid picking up
+# user-local wrappers (e.g. ~/.local/bin/snakemake) with missing metadata.
+host_env_root="${CVRCSEQ_HOST_ENV:-/gpfs/data/cvrcbioinfolab/shared_conda_envs/CVRCseq}"
+snakemake_exec_default="$host_env_root/bin/snakemake"
+if [[ -n "${CVRCSEQ_SNAKEMAKE_BIN:-}" ]]; then
+  snakemake_exec="$CVRCSEQ_SNAKEMAKE_BIN"
+elif [[ -x "$snakemake_exec_default" ]] && "$snakemake_exec_default" --version >/dev/null 2>&1; then
+  snakemake_exec="$snakemake_exec_default"
+elif command -v snakemake >/dev/null 2>&1 && snakemake --version >/dev/null 2>&1; then
+  snakemake_exec="$(command -v snakemake)"
+else
+  echo "Error: snakemake executable not found."
+  echo "Set CVRCSEQ_SNAKEMAKE_BIN/CVRCSEQ_HOST_ENV or ensure snakemake is runnable in PATH."
+  exit 1
+fi
+
+run_snakemake() {
+  "$snakemake_exec" "$@"
+}
+
 # load conda environment on host only
 if [[ "$use_container" = "no" ]]; then
   source workflow/scripts/condaload_CVRCseq.sh
@@ -156,8 +176,8 @@ skip_cat_rename=${skip_cat_rename:-'dont_skip'}
 
 if [[ $skip_cat_rename = "skip" ]] ; then
   #launch snakemake without running cat_rename.py first
-  snakemake $snakemake_arg "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
-  snakemake --report workflow/snake_make_report.html || exit 1
+  run_snakemake $snakemake_arg "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
+  run_snakemake --report workflow/snake_make_report.html || exit 1
   run_tool multiqc . --force || exit 1
 else
   if ! run_tool python workflow/scripts/cat_rename.py "$fastq_directory" "$workflow"; then
@@ -165,8 +185,8 @@ else
     exit 1
   fi
   #launch snakemake
-  snakemake $snakemake_arg "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
-  snakemake --report workflow/snake_make_report.html || exit 1
+  run_snakemake $snakemake_arg "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
+  run_snakemake --report workflow/snake_make_report.html || exit 1
   run_tool multiqc . --force --interactive || exit 1
 fi
 

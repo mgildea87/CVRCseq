@@ -32,7 +32,7 @@ rule all:
 rule fastqc:
 	input: 
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
 	threads: 1
@@ -53,7 +53,7 @@ rule trim:
 	threads: 16
 	log:
 		'results/logs/trim_reports/{sample}.log'
-	resources: 
+	resources:
 		time_min=240, mem_mb=20000
 	params:
 		'--detect_adapter_for_pe'
@@ -69,7 +69,7 @@ rule align:
 	threads: 16
 	log:
 		'results/logs/alignment_reports/{sample}.log'
-	resources: 
+	resources:
 		time_min=240, mem_mb=60000
 	params:
 		'--phred33 --rna-strandness RF --dta'
@@ -77,18 +77,18 @@ rule align:
 		'hisat2 {params} -p {threads} -x %s -1 {input.R1} -2 {input.R2} 2> {log} | samtools sort - -o RNAseq_PE_HISAT2_stringtie/results/alignment/{wildcards.sample}.bam -@ {threads}' % (genome)
 
 rule count:
-       input:
-	       bam = 'results/alignment/{sample}.bam'
-       output:
-	       trans_counts = 'results/stringtie/{sample}/{sample}.gtf',
-	       gene_counts = 'results/stringtie/{sample}/{sample}.tab'
-       threads: 16
-       resources: 
-	       time_min=240, mem_mb=40000
-       params:
-	       '{stranded} -e -B'.format(stranded=config["stringtie_strandedness"])
-       shell:
-	       'stringtie -p {threads} {params} -G %s -o {output.trans_counts} -l {wildcards.sample} -A {output.gene_counts} {input.bam}' % (GTF)
+	input:
+		bam = 'results/alignment/{sample}.bam'
+	output:
+		trans_counts = 'results/stringtie/{sample}/{sample}.gtf',
+		gene_counts = 'results/stringtie/{sample}/{sample}.tab'
+	threads: 16
+	resources: 
+		time_min=240, mem_mb=40000
+	params:
+		'{stranded} -e -B'.format(stranded=config["stringtie_strandedness"])
+	shell:
+		'stringtie -p {threads} {params} -G %s -o {output.trans_counts} -l {wildcards.sample} -A {output.gene_counts} {input.bam}' % (GTF)
 
 rule deseq_prep:
 	input:

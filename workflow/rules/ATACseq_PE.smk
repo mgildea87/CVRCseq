@@ -44,18 +44,18 @@ rule all:
 rule fastqc:
 	input: 
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc/{sample}{read}_fastqc.html"
 	threads: 1
 	params:
 		'ATACseq_PE/results/fastqc/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule fastqc_post_trim:
 	input: 
 		fastq = "results/trim/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
 	threads: 1
 	params:
@@ -89,7 +89,7 @@ rule align:
 	output:
 		'results/alignment/{sample}.bam'
 	threads: 24
-	resources: 
+	resources:
 		time_min=719, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
@@ -179,7 +179,7 @@ rule bam2bw:
 		'results/alignment/{sample}_dedup_filtered_sorted.bw'
 	threads: 16
 	params:
-	  '--normalizeUsing RPKM --outFileFormat bigwig --binSize 1'
+		'--normalizeUsing RPKM --outFileFormat bigwig --binSize 1'
 	shell:
 		"""
 		bamCoverage -b {input.BAM} -o {output} {params} --numberOfProcessors {threads}
@@ -209,16 +209,16 @@ rule FRP:
 		"""
 		# Count total mapped reads
 		total_reads=$(samtools view -c -F 260 {input.bam})
-    	total_fragments=$(( total_reads / 2 ))
+		total_fragments=$(( total_reads / 2 ))
 		# Count reads overlapping peaks
 		reads_in_peaks=$(samtools sort -n -@ {threads} -m 3G {input.bam} | bedtools bamtobed -bedpe -i stdin | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
-        
+
 		# Count total number of peaks called
 		num_peaks=$(wc -l < {input.peaks})
 
 		# Calculate FRiP
 		frip=$(awk -v a="$reads_in_peaks" -v b="$total_fragments" \
-		    'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
+			'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
 
 		# Save all values to a single line
 		echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$reads_in_peaks\\t$frip" > {output.stats}

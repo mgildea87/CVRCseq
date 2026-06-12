@@ -39,25 +39,25 @@ rule all:
 		"results/peaks/MACS2/qc/frip_summary_detailed.tsv"
 
 rule fastqc:
-	input: 
+	input:
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc/{sample}{read}_fastqc.html"
 	threads: 1
 	params:
 		'CUT-RUN_PE/results/fastqc/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule fastqc_post_trim:
-	input: 
+	input:
 		fastq = "results/trim/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
 	threads: 1
 	params:
 		'CUT-RUN_PE/results/fastqc_post_trim/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule trim:
@@ -70,7 +70,7 @@ rule trim:
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=10000
 	log:
 		'results/logs/trim_reports/{sample}.log'
@@ -86,7 +86,7 @@ rule align:
 	output:
 		'results/alignment/{sample}.bam'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
@@ -102,7 +102,7 @@ rule align_spike:
 	output:
 		'results/alignment/{sample}_ecoli.bam'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}_ecoli.log'
@@ -117,7 +117,7 @@ rule sort:
 	output:
 		'results/alignment/{sample}_sorted.bam'	
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=20000
 	shell:
 		'samtools sort -@ {threads} {input} > {output}'
@@ -128,7 +128,7 @@ rule index:
 	output:
 		'results/alignment/{sample}_sorted.bam.bai'	
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=20000
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
@@ -187,22 +187,22 @@ rule FRP_MACS2:
 	output:
 		stats = "results/peaks/MACS2/qc/{sample}_frip_stats.txt"
 	threads:8
-	resources: 
+	resources:
 		mem_mb=50000
 	shell:
 		"""
 		# Count total mapped reads
 		total_reads=$(samtools view -c -F 260 {input.bam})
-    	total_fragments=$(( total_reads / 2 ))
+		total_fragments=$(( total_reads / 2 ))
 		# Count reads overlapping peaks
 		reads_in_peaks=$(samtools sort -n -@ {threads} -m 3G {input.bam} | bedtools bamtobed -bedpe -i stdin | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
-        
+
 		# Count total number of peaks called
 		num_peaks=$(wc -l < {input.peaks})
 
 		# Calculate FRiP
 		frip=$(awk -v a="$reads_in_peaks" -v b="$total_fragments" \
-		    'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
+			'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
 
 		# Save all values to a single line
 		echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$reads_in_peaks\\t$frip" > {output.stats}

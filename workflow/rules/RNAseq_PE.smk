@@ -27,15 +27,15 @@ rule all:
 		expand('results/fastqc_post_trim/{sample}_trimmed{read}_fastqc.html', sample = sample_ids, read = read)
 
 rule fastqc:
-	input: 
+	input:
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
 	threads: 1
 	params:
 		'RNAseq_PE/results/fastqc/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule trim:
@@ -59,14 +59,14 @@ rule trim:
 		'fastp -w {threads} {params} -i {input.R1} -I {input.R2} -o {output.R1} -O {output.R2} --html {output.html} --json {output.json} 2> {log}'
 
 rule fastqc_post_trim:
-	input: 
+	input:
 		fastq = "results/trim/{sample}{read}.fastq.gz"
 	output:  
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
 	threads: 1
 	params:
 		'RNAseq_PE/results/fastqc_post_trim/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule align:
@@ -87,14 +87,14 @@ rule align:
 
 rule count:
        input:
-	       bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
-       output:
-	       counts = 'results/feature_counts/count_table.txt'
-       threads: 16
-       resources: 
-	       time_min=600, mem_mb=30000
-       params:
-	       '-p --countReadPairs -g gene_id -s {stranded} -Q 5 --extraAttributes gene_type,gene_name'.format(stranded=config["featurecounts_strandedness"])
-       shell:
-	       'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
+		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
+	output:
+		counts = 'results/feature_counts/count_table.txt'
+	threads: 16
+	resources: 
+		time_min=600, mem_mb=30000
+	params:
+		'-p --countReadPairs -g gene_id -s {stranded} -Q 5 --extraAttributes gene_type,gene_name'.format(stranded=config["featurecounts_strandedness"])
+	shell:
+		'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
 

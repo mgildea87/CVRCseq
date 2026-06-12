@@ -29,15 +29,15 @@ rule all:
 		expand('results/fastqc_post_trim/{sample_file}_trimmed{read}_fastqc.html', sample_file = sample_ids, read = read)
 
 rule fastqc:
-	input: 
+	input:
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
 	threads: 1
 	params:
 		'sRNAseq_SE/results/fastqc/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule umi_tools_trim:
@@ -46,7 +46,7 @@ rule umi_tools_trim:
 	output:
 		R1='results/umi_tools_trim/{sample}_trimmed_R1.fastq.gz'
 	threads: 1
-	resources: 
+	resources:
 		time_min=120, mem_mb=10000
 	log:
 		'results/logs/umi_tools_trim_reports/{sample}.log'
@@ -54,14 +54,14 @@ rule umi_tools_trim:
 		'umi_tools extract --extract-method=regex --bc-pattern=".+(?P<discard_1>AACTGTAGGCACCATCAAT){{s<=2}}(?P<umi_1>.{{12}})(?P<discard_2>.+)" -I {input.R1} -S {output.R1} -L {log}'
 
 rule fastqc_post_trim:
-	input: 
+	input:
 		fastq = "results/umi_tools_trim/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
 	threads: 1
 	params:
 		'sRNAseq_SE/results/fastqc_post_trim/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}' 
 
 rule align:
@@ -70,7 +70,7 @@ rule align:
 	output:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
-	resources: 
+	resources:
 		time_min=lambda wildcards, input: max(120, int((0.714907 + 0.00343022 * input.size_mb * 2.000) * 1.500)), mem_mb=60000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignEndsType EndToEnd --outFilterMismatchNmax 1'
@@ -80,14 +80,14 @@ rule align:
 		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix sRNAseq_SE/results/alignment/{wildcards.sample}_ | samtools view -bh > sRNAseq_SE/results/alignment/{wildcards.sample}.bam' % (genome)
 		
 rule count:
-       input:
-	       bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
-       output:
-	       counts = 'results/feature_counts/count_table.txt'
-       threads: 16
-       resources: 
-	       time_min=600, mem_mb=30000
-       params:
-	       '-g gene_id -s {stranded} -Q 5 -F GTF --extraAttributes gene_type,gene_name'.format(stranded=config["featurecounts_strandedness"])
-       shell:
-	       'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)
+	input:
+		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
+	output:
+		counts = 'results/feature_counts/count_table.txt'
+	threads: 16
+	resources: 
+		time_min=600, mem_mb=30000
+	params:
+		'-g gene_id -s {stranded} -Q 5 -F GTF --extraAttributes gene_type,gene_name'.format(stranded=config["featurecounts_strandedness"])
+	shell:
+		'featureCounts {params} -T {threads} -a %s -o {output.counts} {input.bam}' % (GTF)

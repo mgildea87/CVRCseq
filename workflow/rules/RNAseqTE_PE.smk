@@ -28,16 +28,16 @@ rule all:
 		'results/TEcount/count_table_all.csv'
 
 rule fastqc:
-	input: 
+	input:
 		fastq = "inputs/fastq/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc/{sample}{read}_fastqc.html",
 		"results/fastqc/{sample}{read}_fastqc.zip"
-	resources: 
+	resources:
 		time_min=300
 	params:
 		'RNAseqTE_PE/results/fastqc/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule trim:
@@ -50,7 +50,7 @@ rule trim:
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
@@ -61,15 +61,15 @@ rule trim:
 		'fastp -w {threads} {params} -i {input.R1} -I {input.R2} -o {output.R1} -O {output.R2} --html {output.html} --json {output.json} 2> {log}'
 
 rule fastqc_post_trim:
-	input: 
+	input:
 		fastq = "results/trim/{sample}{read}.fastq.gz"
-	output:  
+	output:
 		"results/fastqc_post_trim/{sample}{read}_fastqc.html"
-	resources: 
+	resources:
 		time_min=300
 	params:
 		'RNAseqTE_PE/results/fastqc_post_trim/'
-	shell: 
+	shell:
 		'fastqc {input.fastq} -o {params}'
 
 rule align:
@@ -79,7 +79,7 @@ rule align:
 	output:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
-	resources: 
+	resources:
 		time_min=lambda wildcards, input: max(120, int((2.285098 + 0.00378795 * input.size_mb * 2.000) * 1.500)), mem_mb=40000
 	params:
 		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignMatesGapMax 1000000 --outFilterMismatchNmax 999 --alignIntronMax 1000000 ' 
@@ -94,7 +94,7 @@ rule index:
 	output:
 		'results/alignment/{sample}.bam.bai'	
 	threads: 16
-	resources: 
+	resources:
 		time_min=45, mem_mb=30000
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
@@ -106,7 +106,7 @@ rule TEcount:
 	output:
 		counts = 'results/TEcount/{sample}.cntTable'
 	threads: 1
-	resources: 
+	resources:
 		time_min=lambda wildcards, input: max(120, int(171 + 0.01202 * input.size_mb * 2)), mem_mb=80000, partition="cpu_medium"
 	params:
 		'--format BAM --mode multi --stranded reverse --outdir RNAseqTE_PE/results/TEcount/ --sortByPos'
@@ -114,10 +114,10 @@ rule TEcount:
 		'TEcount {params} -b {input.bam} --GTF %s --TE %s --project {wildcards.sample}' % (GTF, TE_GTF)
 
 rule TEcount_combine:
-  input:
-    expand('results/TEcount/{sample}.cntTable', sample = sample_ids)
-  output:
-    'results/TEcount/count_table_all.csv'
-  script:
-    '../scripts/combine_TE_counts.py'
+	input:
+		expand('results/TEcount/{sample}.cntTable', sample = sample_ids)
+	output:
+		'results/TEcount/count_table_all.csv'
+	script:
+		'../scripts/combine_TE_counts.py'
 

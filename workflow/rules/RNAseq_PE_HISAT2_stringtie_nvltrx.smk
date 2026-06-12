@@ -51,7 +51,7 @@ rule trim:
 		html='results/logs/trim_reports/{sample}.html',
 		json='results/logs/trim_reports/{sample}.json'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=20000
 	log:
 		'results/logs/trim_reports/{sample}.log'
@@ -67,7 +67,7 @@ rule align:
 	output:
 		bam = 'results/alignment/{sample}.bam'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=60000
 	log:
 		'results/logs/alignment_reports/{sample}.log'
@@ -77,18 +77,18 @@ rule align:
 		'hisat2 {params} -p {threads} -x %s -1 {input.R1} -2 {input.R2} 2> {log} | samtools sort - -o RNAseq_PE_HISAT2_stringtie_nvltrx/results/alignment/{wildcards.sample}.bam -@ {threads}' % (genome)
 
 rule count:
-       input:
-	       bam = 'results/alignment/{sample}.bam'
-       output:
-	       trans_counts = 'results/stringtie/{sample}.gtf',
-	       gene_counts = 'results/stringtie/{sample}.tab'
-       threads: 16
-       resources: 
-	       time_min=240, mem_mb=40000
-       params:
-	       '{stranded} --conservative'.format(stranded=config["stringtie_strandedness"])
-       shell:
-	       'stringtie -p {threads} {params} -G %s -o {output.trans_counts} -l {wildcards.sample} -A {output.gene_counts} {input.bam}' % (GTF)
+	input:
+		bam = 'results/alignment/{sample}.bam'
+	output:
+		trans_counts = 'results/stringtie/{sample}.gtf',
+		gene_counts = 'results/stringtie/{sample}.tab'
+	threads: 16
+	resources:
+		time_min=240, mem_mb=40000
+	params:
+		'{stranded} --conservative'.format(stranded=config["stringtie_strandedness"])
+	shell:
+		'stringtie -p {threads} {params} -G %s -o {output.trans_counts} -l {wildcards.sample} -A {output.gene_counts} {input.bam}' % (GTF)
 
 rule combine_gtf:
 	input:
@@ -105,24 +105,24 @@ rule merge:
 	output:
 		merged_gtf = 'results/stringtie/merged.gtf'
 	threads: 16
-	resources: 
+	resources:
 		time_min=240, mem_mb=40000
 	shell:
 		'stringtie --merge -p {threads} -G %s -o {output.merged_gtf} {input.gtf_list}' % (GTF)
 
 rule count_2:
-       input:
-	       bam = 'results/alignment/{sample}.bam',
-	       merged_gtf = 'results/stringtie/merged.gtf'
-       output:
-	       trans_counts = 'results/stringtie/merged/{sample}/{sample}_merged.gtf'
-       threads: 16
-       resources: 
-	       time_min=240, mem_mb=40000
-       params:
-	       '{stranded} -e -B'.format(stranded=config["stringtie_strandedness"])
-       shell:
-	       'stringtie -p {threads} {params} -G  {input.merged_gtf} -o {output.trans_counts} {input.bam}'
+	input:
+		bam = 'results/alignment/{sample}.bam',
+		merged_gtf = 'results/stringtie/merged.gtf'
+	output:
+		trans_counts = 'results/stringtie/merged/{sample}/{sample}_merged.gtf'
+	threads: 16
+	resources:
+		time_min=240, mem_mb=40000
+	params:
+		'{stranded} -e -B'.format(stranded=config["stringtie_strandedness"])
+	shell:
+		'stringtie -p {threads} {params} -G  {input.merged_gtf} -o {output.trans_counts} {input.bam}'
 
 rule deseq_prep:
 	input:

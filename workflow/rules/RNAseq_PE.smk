@@ -79,11 +79,27 @@ rule align:
 	resources: 
 		time_min=lambda wildcards, input: max(120, int((0.714907 + 0.00343022 * input.size_mb * 2.000) * 1.500)), mem_mb=60000
 	params:
-		'--readFilesCommand zcat --outStd BAM_SortedByCoordinate --outSAMtype BAM SortedByCoordinate --alignMatesGapMax 1000000 --outFilterMismatchNmax 999 --alignIntronMax 1000000 ' 
-		'--alignSplicedMateMapLmin 3 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNoverReadLmax 0.04 --outSAMunmapped Within KeepPairs --outSAMattributes All --alignIntronMin 20 '
-		'--outFilterIntronMotifs RemoveNoncanonicalUnannotated --scoreGapNoncan -14 --outSJfilterReads Unique --outFilterMultimapNmax 10'
+		" ".join([
+			"--readFilesCommand zcat",
+			"--outStd BAM_SortedByCoordinate",
+			"--outSAMtype BAM SortedByCoordinate",
+			"--alignMatesGapMax 1000000",
+			"--outFilterMismatchNmax 999",
+			"--alignIntronMax 1000000",
+			"--alignSplicedMateMapLmin 3",
+			"--alignSJoverhangMin 8",
+			"--alignSJDBoverhangMin 1",
+			"--outFilterMismatchNoverReadLmax 0.04",
+			"--outSAMunmapped Within KeepPairs",
+			"--outSAMattributes All",
+			"--alignIntronMin 20",
+			"--outFilterIntronMotifs RemoveNoncanonicalUnannotated",
+			"--scoreGapNoncan -14",
+			"--outSJfilterReads Unique",
+			"--outFilterMultimapNmax 10",
+		])
 	shell:
-		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseq_PE/results/alignment/{wildcards.sample}_ | samtools view -bh > RNAseq_PE/results/alignment/{wildcards.sample}.bam' % (genome)
+		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
 
 rule count:
        input:

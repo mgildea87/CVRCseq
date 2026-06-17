@@ -77,7 +77,7 @@ rule align:
 		'--outFilterMultimapScoreRange 0 --outFilterMultimapNmax 10 --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0'
 		'--outFilterMatchNmin 16 --alignSJDBoverhangMin 1000 --alignIntronMax 1'
 	shell:
-		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix sRNAseq_SE/results/alignment/{wildcards.sample}_ | samtools view -bh > sRNAseq_SE/results/alignment/{wildcards.sample}.bam' % (genome)
+		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix sRNAseq_SE/results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
 		
 rule count:
 	input:

@@ -103,7 +103,7 @@ rule align:
 			"--winAnchorMultimapNmax 100",
 		])
 	shell:
-		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseqTE_PE/results/alignment/{wildcards.sample}_ | samtools view -bh > RNAseqTE_PE/results/alignment/{wildcards.sample}.bam' % (genome)
+		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseqTE_PE/results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
 
 rule index:
 	input:

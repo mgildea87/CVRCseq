@@ -99,7 +99,7 @@ rule align:
 			"--outFilterMultimapNmax 10",
 		])
 	shell:
-		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
+		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseq_PE/results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
 
 rule count:
        input:

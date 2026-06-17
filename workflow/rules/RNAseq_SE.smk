@@ -94,7 +94,7 @@ rule align:
 			"--outFilterMultimapNmax 10",
 		])
 	shell:
-		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
+		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} --outFileNamePrefix RNAseq_SE/results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
 rule count:
 	input:
 		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)

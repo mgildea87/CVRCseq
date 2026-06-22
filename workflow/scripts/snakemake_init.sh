@@ -1,5 +1,7 @@
 #!/bin/bash -l
 
+set -euo pipefail
+
 #help function
 Help()
 {
@@ -17,7 +19,7 @@ Help()
    echo "           -d     .fastq directory. location of .fastq files"
    echo "           -s     additional arguments to pass to snakemake (quote multiple flags: -s \"--dryrun --quiet\")"
    echo "           -c     Skip cat_rename.py. Use to skip copying, concatenating, and renaming of .fastq files to local directory." 
-   echo "           -i     Singularity .sif image path override. If omitted, default image is used when available"
+   echo "           -i     Singularity .sif image path override. If omitted env var will be used if set. Otherwise default image path is used."
    echo "           -w     workflow. Can be 1 of:"
    echo "                             'RNAseq_SE' - single end reads, fastqc, fastp, STAR, featurecounts"
    echo "                             'RNAseq_PE' - paired end reads, fastqc, fastp, STAR, featurecounts"
@@ -40,16 +42,17 @@ Help()
 
 #parse arguments
 sif_path_set="no"
-while getopts ":w:s:ci:d:h" arg; do
+snakemake_args=()
+while getopts ":w:s:cd:i:h" arg; do
     case $arg in
         w) workflow=$OPTARG;;
         s) snakemake_arg=$OPTARG;;
         c) skip_cat_rename='skip';;
         i) sif_path=$OPTARG; sif_path_set="yes";;
         d) fastq_directory=$OPTARG;;
-        h) # display help 
+        h) # display help
             Help
-            exit;; 
+            exit;;
     esac
 done
 
@@ -176,7 +179,7 @@ skip_cat_rename=${skip_cat_rename:-'dont_skip'}
 
 if [[ $skip_cat_rename = "skip" ]] ; then
   #launch snakemake without running cat_rename.py first
-  run_snakemake $snakemake_arg "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
+  run_snakemake "${snakemake_args[@]}" "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
   run_snakemake --report workflow/snake_make_report.html || exit 1
   run_tool multiqc . --force || exit 1
 else
@@ -185,7 +188,7 @@ else
     exit 1
   fi
   #launch snakemake
-  run_snakemake $snakemake_arg "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
+  run_snakemake "${snakemake_args[@]}" "${container_snakemake_args[@]}" --profile config/profile --config workflow=$workflow --rerun-incomplete || exit 1
   run_snakemake --report workflow/snake_make_report.html || exit 1
   run_tool multiqc . --force --interactive || exit 1
 fi

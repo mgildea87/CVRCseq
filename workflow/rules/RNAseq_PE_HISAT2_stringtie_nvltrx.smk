@@ -49,7 +49,7 @@ rule trim:
 		R1='results/trim/{sample}_trimmed_R1.fastq.gz',
 		R2='results/trim/{sample}_trimmed_R2.fastq.gz',
 		html='results/logs/trim_reports/{sample}.html',
-		json='results/logs/trim_reports/{sample}.json'
+		json='results/logs/trim_reports/{sample}_fastp.json'
 	threads: 16
 	resources:
 		time_min=240, mem_mb=20000

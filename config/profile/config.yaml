@@ -2,3 +2,4 @@ jobs: 40
 cores: 16
 cluster: "sbatch --partition {resources.partition} -t {resources.time_min} --mem={resources.mem_mb} --cpus-per-task {threads} -e slurm_logs/{rule}_{wildcards}%j.log -o slurm_logs/{rule}_{wildcards}%j.log -J {rule}"
 default-resources: [partition="cpu_short", mem_mb=10000, time_min=120]
+scheduler: greedy

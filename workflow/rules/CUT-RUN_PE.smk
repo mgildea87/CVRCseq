@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/MACS2', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks', 'CUT-RUN_PE/results/peaks/MACS2',  'CUT-RUN_PE/results/peaks/MACS2/qc']:
+for directory in ['CUT-RUN_PE/results', 'CUT-RUN_PE/results/fastqc', 'CUT-RUN_PE/results/fastqc_post_trim', 'CUT-RUN_PE/results/trim', 'CUT-RUN_PE/results/logs', 'CUT-RUN_PE/results/logs/MACS2', 'CUT-RUN_PE/results/logs/trim_reports', 'CUT-RUN_PE/results/alignment','CUT-RUN_PE/results/alignment/bed', 'CUT-RUN_PE/results/alignment/frag_len', 'CUT-RUN_PE/results/logs/alignment_reports', 'CUT-RUN_PE/results/peaks', 'CUT-RUN_PE/results/peaks/MACS2',  'CUT-RUN_PE/results/peaks/MACS2/qc', 'CUT-RUN_PE/results/peaks/seacr','CUT-RUN_PE/results/peaks/seacr/qc']:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 
@@ -32,11 +32,13 @@ rule all:
 	input:
 		expand('results/fastqc/{sample_file}{read}_fastqc.html', sample_file = sample_ids_file, read = read),
 		expand('results/fastqc_post_trim/{sample_file}_trimmed{read}_fastqc.html', sample_file = sample_ids_file, read = read),
-		expand('results/peaks/MACS2/{sample}_peaks.broadPeak', sample = sample_ids),
+		expand('results/peaks/MACS2/{sample}_peaks.narrowPeak', sample = sample_ids),
 		expand('results/alignment/frag_len/{sample}.txt', sample = sample_ids_file),
 		expand('results/alignment/{sample}_sorted.bam.bai', sample = sample_ids_file),
 		expand('results/alignment/{sample}_sorted.bam', sample = sample_ids_file),
-		"results/peaks/MACS2/qc/frip_summary_detailed.tsv"
+		expand('results/peaks/seacr/{sample}.stringent.bed', sample = sample_ids),
+		"results/peaks/MACS2/qc/frip_summary_detailed.tsv",
+		"results/peaks/seacr/qc/frip_summary_detailed.tsv"
 
 rule fastqc:
 	input:
@@ -133,39 +135,59 @@ rule index:
 	shell:
 		'samtools index -@ {threads} {input} > {output}'
 
-rule spike_in_norm:
-	input:
-		sample_bam='results/alignment/{sample}.bam',
-		spike_bam='results/alignment/{sample}_ecoli.bam'
-	output:
-		'results/alignment/bed/{sample}.bed',
-		'results/alignment/bed/{sample}.bedgraph'
-	threads: 1
-	shell:
-		"""
-		mkdir -p CUT-RUN_PE/results/alignment/bed
-		depth=`samtools view CUT-RUN_PE/results/alignment/{wildcards.sample}_ecoli.bam | wc -l`
-		depth=$((depth/2))
-		echo $depth
-		scale_fac=$(awk -v d="$depth" 'BEGIN {{ if (d > 0) printf "%%.10f", 10000/d; else print "0" }}')
-		echo $scale_fac
-		bedtools bamtobed -bedpe -i CUT-RUN_PE/results/alignment/{wildcards.sample}.bam | cut -f 1,2,6 | sort -k1,1 -k2,2n -k3,3n > CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bed
-		"""
-		'bedtools genomecov -bg -i CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bed -scale $scale_fac -g %s > CUT-RUN_PE/results/alignment/bed/{wildcards.sample}.bedgraph' % (chr_lens)
 
+rule spike_in_norm:
+    input:
+        sample_bam="results/alignment/{sample}.bam",
+        spike_bam="results/alignment/{sample}_ecoli.bam",
+        genome_sizes=chr_lens
+    output:
+        bed="results/alignment/bed/{sample}.bed",
+        bedgraph="results/alignment/bed/{sample}.bedgraph"
+    threads: 1
+    shell:"""
+		set -euo pipefail
+		# BAM has already been filtered for properly paired mapped reads.
+		# Count read 1: one alignment per paired-end fragment.
+		depth=$(samtools view -c -f 64 {input.spike_bam})
+		echo "Spike-in fragment count for {wildcards.sample}: $depth"
+		if [ "$depth" -eq 0 ]; then
+			echo "ERROR: No spike-in fragments detected for {wildcards.sample}. Cannot perform spike-in normalization." >&2
+			exit 1
+		fi
+		scale_fac=$(awk -v d="$depth" 'BEGIN {{ printf "%.10f", 10000 / d }}')
+		echo "Spike-in scale factor: $scale_fac"
+		samtools sort -n -@ {threads} -O BAM {input.sample_bam} | bedtools bamtobed -bedpe -i stdin | awk 'BEGIN {{ OFS="\t" }} {{ print $1, $2, $6 }}' | sort -k1,1 -k2,2n -k3,3n > {output.bed}
+		bedtools genomecov -bg -i {output.bed} -scale "$scale_fac" -g {input.genome_sizes} > {output.bedgraph}
+		"""
+
+rule SEACR:
+	input:
+		exp='results/alignment/bed/{sample}_Antibody.bedgraph',
+		con='results/alignment/bed/{sample}_Control.bedgraph'
+	output:
+		'results/peaks/seacr/{sample}.stringent.bed'
+	threads: 1
+	resources: 
+		time_min=120, mem_mb=40000
+	params:
+		'non stringent'
+	shell:
+		'bash SEACR_1.3.sh {input.exp} {input.con} {params} CUT-RUN_PE/results/peaks/seacr/{wildcards.sample}'
+		
 rule MACS2:
 	input:
 		exp='results/alignment/{sample}_Antibody.bam',
 		con='results/alignment/{sample}_Control.bam'
 	output:
-		'results/peaks/MACS2/{sample}_peaks.broadPeak'
+		'results/peaks/MACS2/{sample}_peaks.narrowPeak'
 	threads: 1
 	resources: 
 		time_min=120, mem_mb=40000
 	log:
 		'results/logs/MACS2/{sample}.log'
 	params:
-		'-B --outdir CUT-RUN_PE/results/peaks/MACS2/ -g %s -q 0.05 -f BAMPE --broad' % (effective_genome_size)
+		'-B --outdir CUT-RUN_PE/results/peaks/MACS2/ -g %s -q 0.05 -f BAMPE' % (effective_genome_size)
 	shell:
 		'macs2 callpeak -t {input.exp} -c {input.con} {params} -n {wildcards.sample} 2> {log}'
 
@@ -183,37 +205,60 @@ rule fragment_size:
 rule FRP_MACS2:
 	input:
 		bam = "results/alignment/{sample}_Antibody_sorted.bam",
-		peaks = "results/peaks/MACS2/{sample}_peaks.broadPeak"
+		peaks = "results/peaks/MACS2/{sample}_peaks.narrowPeak"
 	output:
 		stats = "results/peaks/MACS2/qc/{sample}_frip_stats.txt"
 	threads:8
 	resources:
 		mem_mb=50000
-	shell:
+	shell:"""
+        set -euo pipefail
+        # One read-1 alignment corresponds to one paired-end fragment.
+        total_fragments=$(samtools view -c -f 64 {input.bam})
+        # Name-sort is required for bedtools bamtobed -bedpe.
+        # Convert BEDPE output into one BED interval spanning each fragment.
+        fragments_in_peaks=$(samtools sort -n -@ {threads} -m 3G -O BAM {input.bam} | bedtools bamtobed -bedpe -i stdin | awk 'BEGIN {{ OFS="\\t" }} $1 == $4 && $6 > $2 {{ print $1, $2, $6 }}' | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
+        num_peaks=$(wc -l < {input.peaks})
+        frip=$(awk -v a="$fragments_in_peaks" -v b="$total_fragments" 'BEGIN {{ if (b > 0) printf "%.4f", a / b; else print "0" }}')
+        echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$fragments_in_peaks\\t$frip" > {output.stats}
 		"""
-		# Count total mapped reads
-		total_reads=$(samtools view -c -F 260 {input.bam})
-		total_fragments=$(( total_reads / 2 ))
-		# Count reads overlapping peaks
-		reads_in_peaks=$(samtools sort -n -@ {threads} -m 3G {input.bam} | bedtools bamtobed -bedpe -i stdin | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
 
-		# Count total number of peaks called
-		num_peaks=$(wc -l < {input.peaks})
-
-		# Calculate FRiP
-		frip=$(awk -v a="$reads_in_peaks" -v b="$total_fragments" \
-			'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
-
-		# Save all values to a single line
-		echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$reads_in_peaks\\t$frip" > {output.stats}
-		"""
-		
+rule FRP_seacr:
+    input:
+        bam="results/alignment/{sample}_Antibody_sorted.bam",
+        peaks="results/peaks/seacr/{sample}.stringent.bed"
+    output:
+        stats="results/peaks/seacr/qc/{sample}_frip_stats.txt"
+    threads: 8
+    resources:
+        mem_mb=50000
+    shell: """
+        set -euo pipefail
+        # One read-1 alignment corresponds to one paired-end fragment.
+        total_fragments=$(samtools view -c -f 64 {input.bam})
+        # Name-sort is required for bedtools bamtobed -bedpe.
+        # Convert BEDPE output into one BED interval spanning each fragment.
+        fragments_in_peaks=$(samtools sort -n -@ {threads} -m 3G -O BAM {input.bam} | bedtools bamtobed -bedpe -i stdin | awk 'BEGIN {{ OFS="\\t" }} $1 == $4 && $6 > $2 {{ print $1, $2, $6 }}' | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
+        num_peaks=$(wc -l < {input.peaks})
+        frip=$(awk -v a="$fragments_in_peaks" -v b="$total_fragments" 'BEGIN {{ if (b > 0) printf "%.4f", a / b; else print "0" }}')
+        echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$fragments_in_peaks\\t$frip" > {output.stats}
+    """
+				
 rule aggregate_qc_summary_MACS2:
 	input:
 		# Collects all stats files from the previous step
 		stats_files = expand("results/peaks/MACS2/qc/{sample}_frip_stats.txt", sample=sample_ids)
 	output:
 		summary = "results/peaks/MACS2/qc/frip_summary_detailed.tsv"
+	script:
+		"../scripts/aggregate_peak_qc.py"
+
+rule aggregate_qc_summary_seacr:
+	input:
+		# Collects all stats files from the previous step
+		stats_files = expand("results/peaks/seacr/qc/{sample}_frip_stats.txt", sample=sample_ids)
+	output:
+		summary = "results/peaks/seacr/qc/frip_summary_detailed.tsv"
 	script:
 		"../scripts/aggregate_peak_qc.py"
 

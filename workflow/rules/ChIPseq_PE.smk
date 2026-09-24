@@ -164,23 +164,16 @@ rule FRP:
 	threads:8
 	resources: 
 		mem_mb=50000
-	shell:
-		"""
-		# Count total mapped reads
-		total_reads=$(samtools view -c -F 260 {input.bam})
-		total_fragments=$(( total_reads / 2 ))
-		# Count reads overlapping peaks
-		reads_in_peaks=$(samtools sort -n -@ {threads} -m 3G {input.bam} | bedtools bamtobed -bedpe -i stdin | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
-
-		# Count total number of peaks called
-		num_peaks=$(wc -l < {input.peaks})
-
-		# Calculate FRiP
-		frip=$(awk -v a="$reads_in_peaks" -v b="$total_fragments" \
-			'BEGIN {{ if (b>0) printf "%.4f", a/b; else print "0" }}')
-
-		# Save all values to a single line
-		echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$reads_in_peaks\\t$frip" > {output.stats}
+	shell:"""
+        set -euo pipefail
+        # One read-1 alignment corresponds to one paired-end fragment.
+        total_fragments=$(samtools view -c -f 64 {input.bam})
+        # Name-sort is required for bedtools bamtobed -bedpe.
+        # Convert BEDPE output into one BED interval spanning each fragment.
+        fragments_in_peaks=$(samtools sort -n -@ {threads} -m 3G -O BAM {input.bam} | bedtools bamtobed -bedpe -i stdin | awk 'BEGIN {{ OFS="\\t" }} $1 == $4 && $6 > $2 {{ print $1, $2, $6 }}' | bedtools intersect -a stdin -b {input.peaks} -u | wc -l)
+        num_peaks=$(wc -l < {input.peaks})
+        frip=$(awk -v a="$fragments_in_peaks" -v b="$total_fragments" 'BEGIN {{ if (b > 0) printf "%.4f", a / b; else print "0" }}')
+        echo -e "{wildcards.sample}\\t$total_fragments\\t$num_peaks\\t$fragments_in_peaks\\t$frip" > {output.stats}
 		"""
 
 rule aggregate_qc_summary:

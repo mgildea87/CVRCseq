@@ -102,7 +102,7 @@ rule align:
 		'STAR {params} --genomeDir %s --runThreadN {threads} --readFilesIn {input.R1} {input.R2} --outFileNamePrefix RNAseq_PE/results/alignment/{wildcards.sample}_ > {output.bam}' % (genome)
 
 rule count:
-       input:
+	input:
 		bam = expand('results/alignment/{sample}.bam', sample = sample_ids)
 	output:
 		counts = 'results/feature_counts/count_table.txt'
